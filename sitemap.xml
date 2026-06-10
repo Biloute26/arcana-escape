@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://biloute26.github.io/arcana-escape/</loc>
+    <lastmod>2026-06-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://picsum.photos/id/1029/1200/630</image:loc>
+      <image:title>ARCANA Escape Game — 60 salles de mystères</image:title>
+      <image:caption>Escape game gratuit en ligne avec 60 salles et enquêtes quotidiennes</image:caption>
+    </image:image>
+  </url>
+</urlset>

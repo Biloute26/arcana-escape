@@ -1,0 +1,2342 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARCANA — Escape Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --creme:#f5f0e8;
+  --creme2:#ede4d3;
+  --creme3:#d4c8b0;
+  --or:#b8963e;
+  --or2:#d4aa5a;
+  --brun:#3a2a14;
+  --brun2:#5c4020;
+  --rouge:#8b2020;
+  --rouge2:#c04030;
+  --vert:#1a3a2a;
+  --bleu:#1a2a4a;
+  --gris:#7a6a58;
+  --ombre:rgba(58,42,20,0.15);
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--creme);color:var(--brun);font-family:'Inter',sans-serif}
+
+/* ===== LOADER ===== */
+#loader{position:fixed;inset:0;z-index:9999;background:var(--creme);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px}
+.loader-ornament{width:160px;height:160px}
+.loader-ornament svg{width:100%;height:100%}
+.loader-progress{width:260px;height:3px;background:var(--creme3);border-radius:2px;overflow:hidden}
+.loader-bar{height:100%;background:linear-gradient(90deg,var(--or),var(--or2));width:0;animation:loadBar 2.8s cubic-bezier(0.4,0,0.2,1) forwards}
+@keyframes loadBar{to{width:100%}}
+.loader-title{font-family:'Cinzel Decorative',serif;font-size:2.2rem;color:var(--brun);letter-spacing:0.15em;animation:fadeUp 0.6s 0.3s both}
+.loader-sub{font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--gris);font-size:1rem;letter-spacing:0.2em;animation:fadeUp 0.6s 0.5s both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ===== MENU ===== */
+#menu{position:fixed;inset:0;z-index:100;display:none;overflow:hidden}
+.menu-hero{position:absolute;inset:0;background-size:cover;background-position:center;filter:brightness(0.5)}
+.menu-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(245,240,232,0.1) 0%,rgba(245,240,232,0.92) 60%,var(--creme) 100%)}
+.menu-content{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:60px 40px;text-align:center}
+.menu-logo{font-family:'Cinzel Decorative',serif;font-size:clamp(2.5rem,8vw,5.5rem);font-weight:900;color:var(--brun);letter-spacing:0.1em;line-height:1;margin-bottom:8px;text-shadow:0 2px 20px rgba(245,240,232,0.8)}
+.menu-tagline{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.3rem;color:var(--gris);margin-bottom:48px;letter-spacing:0.1em}
+.menu-btns{display:flex;flex-direction:column;gap:14px;width:100%;max-width:340px;margin-bottom:40px}
+.btn{position:relative;padding:15px 32px;font-family:'Cinzel Decorative',serif;font-size:0.8rem;letter-spacing:0.15em;border:none;cursor:pointer;transition:all 0.25s;overflow:hidden}
+.btn-or{background:var(--or);color:var(--creme);box-shadow:0 4px 20px rgba(184,150,62,0.4)}
+.btn-or:hover{background:var(--or2);transform:translateY(-2px);box-shadow:0 8px 28px rgba(184,150,62,0.5)}
+.btn-brun{background:var(--brun);color:var(--creme);box-shadow:0 4px 16px rgba(58,42,20,0.3)}
+.btn-brun:hover{background:var(--brun2);transform:translateY(-2px)}
+.btn-outline{background:transparent;color:var(--brun);border:1.5px solid var(--creme3)}
+.btn-outline:hover{border-color:var(--brun);background:rgba(58,42,20,0.05)}
+.menu-stats{display:flex;gap:50px}
+.stat{text-align:center}
+.stat-n{font-family:'Cinzel Decorative',serif;font-size:1.6rem;color:var(--or);display:block}
+.stat-l{font-size:0.7rem;color:var(--gris);letter-spacing:0.2em;text-transform:uppercase}
+
+/* ===== MAP ===== */
+#map-screen{position:fixed;inset:0;z-index:100;display:none;background:var(--creme2);overflow-y:auto}
+.map-header{position:sticky;top:0;z-index:10;padding:20px 32px;background:rgba(237,228,211,0.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--creme3);display:flex;align-items:center;justify-content:space-between}
+.map-title-h{font-family:'Cinzel Decorative',serif;font-size:1.1rem;color:var(--brun);letter-spacing:0.15em}
+.map-prog{font-family:'Cormorant Garamond',serif;color:var(--gris);font-size:0.95rem}
+.map-progress-bar{height:3px;background:var(--creme3);margin:8px 0 0}
+.map-progress-fill{height:100%;background:var(--or);transition:width 0.5s}
+.map-grid{display:block;padding:0}
+.room-card{position:relative;border-radius:8px;overflow:hidden;cursor:pointer;transition:all 0.3s;box-shadow:0 2px 12px var(--ombre);background:#fff}
+.room-card img{width:100%;height:130px;object-fit:cover;display:block;transition:transform 0.4s}
+.room-card:hover img{transform:scale(1.04)}
+.room-card.locked{cursor:not-allowed;opacity:0.55;filter:grayscale(0.5)}
+.room-card.locked img{filter:brightness(0.7)}
+.room-card.completed{box-shadow:0 2px 16px rgba(184,150,62,0.3)}
+.room-card.completed::after{content:'✓';position:absolute;top:10px;right:10px;background:var(--or);color:white;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:600}
+.room-card.current{box-shadow:0 4px 20px rgba(184,150,62,0.4),0 0 0 2px var(--or)}
+.room-info{padding:12px 14px}
+.room-num{font-size:0.65rem;text-transform:uppercase;letter-spacing:0.2em;color:var(--or);font-weight:600}
+.room-name{font-family:'Cormorant Garamond',serif;font-size:1rem;color:var(--brun);font-weight:600;margin-top:2px;line-height:1.3}
+.room-theme-badge{display:inline-block;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.15em;padding:2px 8px;border-radius:20px;margin-top:6px}
+.badge-medieval{background:#e8d5b0;color:#6b4a1a}
+.badge-horreur{background:#e8d0d0;color:#6b1a1a}
+.badge-aventure{background:#d0e0d0;color:#1a4a2a}
+.room-lock{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(237,228,211,0.6)}
+.room-lock-icon{font-size:2rem;color:var(--gris)}
+
+/* ===== JEU ===== */
+#game-screen{position:fixed;inset:0;z-index:200;display:none}
+.scene-img{position:absolute;inset:0;background-size:cover;background-position:center;transition:opacity 1s}
+.scene-vignette{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 40%,rgba(58,42,20,0.6) 100%)}
+.scene-bottom{position:absolute;bottom:0;left:0;right:0;height:120px;background:linear-gradient(to top,rgba(245,240,232,0.95),transparent)}
+.game-hud{position:absolute;top:0;left:0;right:0;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(to bottom,rgba(245,240,232,0.9),transparent);z-index:10}
+.hud-info{display:flex;flex-direction:column}
+.hud-num{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.2em;color:var(--or);font-weight:600}
+.hud-name{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--brun);font-weight:600}
+.hud-center{display:flex;flex-direction:column;align-items:center}
+.hud-timer{font-family:'Cinzel Decorative',serif;font-size:1.6rem;color:var(--brun);letter-spacing:0.05em}
+.hud-timer.urgent{color:var(--rouge2);animation:pulse 0.6s infinite alternate}
+@keyframes pulse{from{opacity:1}to{opacity:0.5}}
+.hud-right{display:flex;gap:10px}
+.hud-btn{background:rgba(245,240,232,0.85);border:1px solid var(--creme3);color:var(--brun);padding:8px 16px;font-size:0.75rem;letter-spacing:0.1em;cursor:pointer;border-radius:4px;font-family:'Inter',sans-serif;font-weight:500;transition:all 0.2s}
+.hud-btn:hover{background:white;border-color:var(--or);color:var(--or)}
+#hotspotsContainer{position:absolute;inset:0;pointer-events:none}
+.hotspot{position:absolute;pointer-events:all;cursor:pointer;transform:translate(-50%,-50%)}
+.hs-ring{width:48px;height:48px;border:2px solid rgba(184,150,62,0.7);border-radius:50%;animation:hsPulse 2s infinite;position:relative}
+.hs-ring::after{content:'';position:absolute;inset:-6px;border:1px solid rgba(184,150,62,0.3);border-radius:50%;animation:hsPulse 2s 0.4s infinite}
+@keyframes hsPulse{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.6)}}
+@keyframes btnPulse{0%,100%{box-shadow:0 4px 20px rgba(184,150,62,0.5)}50%{box-shadow:0 4px 32px rgba(184,150,62,0.8)}}
+.hs-dot{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:10px;height:10px;background:var(--or);border-radius:50%;z-index:2}
+.hs-label{position:absolute;top:-36px;left:50%;transform:translateX(-50%);white-space:nowrap;background:rgba(245,240,232,0.95);color:var(--brun);font-size:0.75rem;padding:4px 10px;border-radius:20px;border:1px solid var(--creme3);opacity:0;transition:opacity 0.2s;pointer-events:none;font-weight:500}
+.hotspot:hover .hs-label{opacity:1}
+
+/* ===== MODAL ENIGME ===== */
+.modal-bg{position:fixed;inset:0;z-index:500;background:rgba(58,42,20,0.55);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.3s;backdrop-filter:blur(4px)}
+.modal-bg.open{opacity:1;pointer-events:all}
+.modal{background:var(--creme);max-width:620px;width:92%;max-height:90vh;overflow-y:auto;border-radius:12px;box-shadow:0 20px 60px rgba(58,42,20,0.35);position:relative}
+.modal-img-wrap{position:relative;height:280px;overflow:hidden;border-radius:12px 12px 0 0;background:#0d0c06}
+.modal-img-wrap svg{width:100%;height:280px;display:block}
+.modal-img-overlay{position:absolute;bottom:0;left:0;right:0;height:40px;background:linear-gradient(to bottom,transparent,var(--creme))}
+.modal-body{padding:28px 32px 32px}
+.modal-close{position:absolute;top:16px;right:16px;z-index:10;background:rgba(245,240,232,0.9);border:1px solid var(--creme3);color:var(--brun);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+.modal-close:hover{background:white;border-color:var(--rouge);color:var(--rouge)}
+.modal-label{font-size:0.65rem;text-transform:uppercase;letter-spacing:0.25em;color:var(--or);font-weight:600;margin-bottom:6px}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:var(--brun);font-weight:600;margin-bottom:6px;line-height:1.2}
+.modal-sub{font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--gris);margin-bottom:20px;font-size:1rem}
+.modal-text{font-family:'Cormorant Garamond',serif;color:var(--brun);font-size:1.05rem;line-height:1.8;margin-bottom:24px;background:rgba(212,200,176,0.25);padding:16px 20px;border-left:3px solid var(--or);border-radius:0 6px 6px 0}
+.e-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.e-opt{padding:13px 16px;background:white;border:1.5px solid var(--creme3);color:var(--brun);font-family:'Cormorant Garamond',serif;font-size:1rem;cursor:pointer;border-radius:6px;transition:all 0.2s;text-align:left;font-weight:500}
+.e-opt:hover{border-color:var(--or);color:var(--or);background:rgba(184,150,62,0.04)}
+.e-opt.correct{border-color:var(--vert);background:rgba(26,58,42,0.05);color:var(--vert)}
+.e-opt.wrong{border-color:var(--rouge);background:rgba(139,32,32,0.05);color:var(--rouge)}
+.e-input-row{display:flex;gap:10px;margin-bottom:18px}
+.e-input{flex:1;padding:12px 16px;background:white;border:1.5px solid var(--creme3);color:var(--brun);font-family:'Cormorant Garamond',serif;font-size:1.1rem;border-radius:6px;outline:none;transition:border 0.2s}
+.e-input:focus{border-color:var(--or)}
+.btn-valider{padding:12px 28px;background:var(--or);color:var(--creme);border:none;font-family:'Cinzel Decorative',serif;font-size:0.75rem;letter-spacing:0.15em;cursor:pointer;border-radius:6px;transition:all 0.25s;white-space:nowrap}
+.btn-valider:hover{background:var(--or2);transform:translateY(-1px)}
+.hint-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.hint-btn{background:none;border:1px solid var(--creme3);color:var(--gris);padding:7px 14px;font-size:0.8rem;cursor:pointer;border-radius:4px;transition:all 0.2s}
+.hint-btn:hover{border-color:var(--or);color:var(--or)}
+.hint-box{background:rgba(212,200,176,0.3);border:1px solid var(--creme3);padding:12px 16px;border-radius:6px;font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--gris);font-size:0.95rem;display:none}
+.feedback{padding:12px 16px;border-radius:6px;font-family:'Cormorant Garamond',serif;font-size:1rem;display:none;margin-top:12px;text-align:center}
+.feedback.ok{background:rgba(26,58,42,0.08);color:var(--vert);border:1px solid rgba(26,58,42,0.2)}
+.feedback.ko{background:rgba(139,32,32,0.07);color:var(--rouge);border:1px solid rgba(139,32,32,0.2)}
+
+/* ===== VICTOIRE SALLE ===== */
+#victory-room{position:fixed;inset:0;z-index:400;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px}
+.vic-bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:brightness(0.25) saturate(0.6)}
+.vic-content{position:relative;z-index:2;background:rgba(245,240,232,0.96);padding:48px 56px;border-radius:16px;box-shadow:0 20px 60px rgba(58,42,20,0.4);max-width:500px;width:90%}
+.vic-stars{font-size:2.2rem;letter-spacing:0.2em;margin-bottom:16px}
+.vic-title{font-family:'Cinzel Decorative',serif;font-size:1.8rem;color:var(--brun);margin-bottom:8px}
+.vic-sub{font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--gris);font-size:1.05rem;margin-bottom:24px}
+.vic-time{font-family:'Cinzel Decorative',serif;font-size:2rem;color:var(--or);margin-bottom:32px}
+.vic-btns{display:flex;flex-direction:column;gap:12px}
+
+/* ===== ENQUÊTES ===== */
+#enquetes-screen{position:fixed;inset:0;z-index:100;display:none;background:var(--creme2);overflow-y:auto}
+.enq-hero{height:320px;position:relative;overflow:hidden}
+.enq-hero img{width:100%;height:100%;object-fit:cover}
+.enq-hero-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(58,42,20,0.2),rgba(237,228,211,1))}
+.enq-hero-content{position:absolute;bottom:24px;left:32px;right:32px}
+.enq-back{background:rgba(245,240,232,0.9);border:1px solid var(--creme3);color:var(--brun);padding:8px 16px;font-size:0.75rem;font-weight:500;cursor:pointer;border-radius:4px;position:absolute;top:16px;left:16px;z-index:10;transition:all 0.2s}
+.enq-back:hover{background:white}
+.enq-daily-label{display:inline-flex;align-items:center;gap:8px;background:var(--rouge);color:white;padding:4px 14px;border-radius:20px;font-size:0.7rem;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:10px}
+.enq-daily-dot{width:7px;height:7px;background:white;border-radius:50%;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.enq-case-title{font-family:'Cinzel Decorative',serif;font-size:clamp(1.2rem,3vw,1.8rem);color:var(--brun);line-height:1.2;margin-bottom:4px}
+.enq-tagline{font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--gris);font-size:1rem}
+.enq-body{padding:0 32px 48px;max-width:960px;margin:0 auto}
+.streak-bar{background:white;border:1px solid var(--creme3);border-radius:10px;padding:16px 24px;display:flex;align-items:center;gap:16px;margin-bottom:28px;box-shadow:0 2px 8px var(--ombre)}
+.streak-num{font-family:'Cinzel Decorative',serif;font-size:2.2rem;color:var(--or);line-height:1}
+.streak-fire{font-size:1.8rem}
+.streak-info{flex:1}
+.streak-title{font-weight:600;color:var(--brun);font-size:0.9rem}
+.streak-sub{font-size:0.78rem;color:var(--gris);margin-top:2px}
+.section-title{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;color:var(--brun);margin-bottom:16px;padding-bottom:8px;border-bottom:1.5px solid var(--creme3);display:flex;align-items:center;gap:10px}
+.enq-layout{display:grid;grid-template-columns:2fr 1fr;gap:24px;margin-bottom:28px}
+.rapport-card{background:white;border:1px solid var(--creme3);border-radius:10px;padding:24px;box-shadow:0 2px 8px var(--ombre)}
+.rapport-img{width:100%;height:160px;object-fit:cover;border-radius:6px;margin-bottom:16px}
+.rapport-text{font-family:'Cormorant Garamond',serif;font-size:1rem;color:var(--brun);line-height:1.85}
+.rapport-text p{margin-bottom:10px}
+.rapport-lieu{display:inline-flex;align-items:center;gap:6px;background:rgba(212,200,176,0.4);color:var(--brun2);padding:4px 12px;border-radius:20px;font-size:0.78rem;font-weight:500;margin-bottom:14px}
+.suspects-col{display:flex;flex-direction:column;gap:14px}
+.suspect-card{background:white;border:1.5px solid var(--creme3);border-radius:8px;overflow:hidden;cursor:pointer;transition:all 0.2s;box-shadow:0 1px 4px var(--ombre)}
+.suspect-card:hover{border-color:var(--or);transform:translateY(-1px);box-shadow:0 4px 14px rgba(184,150,62,0.2)}
+.suspect-card.selected{border-color:var(--or);box-shadow:0 4px 14px rgba(184,150,62,0.3)}
+.suspect-card.correct-suspect{border-color:var(--vert);background:rgba(26,58,42,0.03)}
+.suspect-card.wrong-suspect{border-color:var(--rouge);background:rgba(139,32,32,0.03);opacity:0.7}
+.suspect-img{width:100%;height:90px;object-fit:cover;object-position:top}
+.suspect-info{padding:10px 12px}
+.suspect-name{font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:600;color:var(--brun)}
+.suspect-role{font-size:0.72rem;color:var(--or);font-weight:600;text-transform:uppercase;letter-spacing:0.1em}
+.suspect-detail{font-size:0.78rem;color:var(--gris);margin-top:4px;line-height:1.45}
+.indices-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:28px}
+.indice-card{background:white;border:1px solid var(--creme3);border-radius:8px;overflow:hidden;box-shadow:0 1px 4px var(--ombre)}
+.indice-img{width:100%;height:110px;object-fit:cover}
+.indice-body{padding:12px 14px}
+.indice-name{font-weight:600;color:var(--brun);font-size:0.85rem;margin-bottom:4px}
+.indice-desc{font-size:0.78rem;color:var(--gris);line-height:1.5}
+.resolution-card{background:white;border:1px solid var(--creme3);border-radius:10px;padding:24px;box-shadow:0 2px 8px var(--ombre);margin-bottom:28px}
+.acc-btns{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+.btn-accuser{padding:10px 20px;background:var(--creme2);border:1.5px solid var(--creme3);color:var(--brun);border-radius:6px;cursor:pointer;font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:600;transition:all 0.2s}
+.btn-accuser:hover{border-color:var(--rouge2);color:var(--rouge2);background:rgba(139,32,32,0.04)}
+.enq-result{padding:16px;border-radius:6px;font-family:'Cormorant Garamond',serif;font-size:1rem;line-height:1.8;display:none}
+.enq-result.ok{background:rgba(26,58,42,0.06);color:var(--vert);border:1px solid rgba(26,58,42,0.2)}
+.enq-result.ko{background:rgba(139,32,32,0.06);color:var(--rouge);border:1px solid rgba(139,32,32,0.2)}
+
+/* ===== CLASSEMENT ===== */
+#classement-screen{position:fixed;inset:0;z-index:100;display:none;background:var(--creme2);overflow-y:auto}
+.cls-header{padding:28px 32px;display:flex;align-items:center;gap:20px;border-bottom:1px solid var(--creme3);background:rgba(237,228,211,0.95)}
+.cls-title{font-family:'Cinzel Decorative',serif;font-size:1.2rem;color:var(--brun)}
+.cls-body{padding:32px;max-width:700px;margin:0 auto}
+.cls-podium{display:flex;align-items:flex-end;justify-content:center;gap:16px;margin-bottom:40px}
+.podium-item{text-align:center;flex:1;max-width:160px}
+.podium-bar{border-radius:8px 8px 0 0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:12px}
+.podium-rank{font-family:'Cinzel Decorative',serif;font-size:1.6rem;color:white}
+.podium-name{font-weight:600;color:var(--brun);font-size:0.9rem;margin-top:8px}
+.podium-score{font-family:'Cinzel Decorative',serif;font-size:0.8rem;color:var(--or)}
+.podium-1 .podium-bar{background:var(--or);height:140px}
+.podium-2 .podium-bar{background:var(--gris);height:100px}
+.podium-3 .podium-bar{background:#8b6020;height:70px}
+.cls-table{width:100%;background:white;border:1px solid var(--creme3);border-radius:10px;overflow:hidden;box-shadow:0 2px 8px var(--ombre)}
+.cls-row{display:grid;grid-template-columns:50px 1fr 100px 100px;align-items:center;padding:14px 20px;border-bottom:1px solid var(--creme3)}
+.cls-row:last-child{border:none}
+.cls-row.header{background:rgba(212,200,176,0.4);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.15em;color:var(--gris);font-weight:600}
+.cls-row.mine{background:rgba(184,150,62,0.08);font-weight:600}
+.cls-rank-n{font-family:'Cinzel Decorative',serif;font-size:0.9rem;color:var(--gris)}
+.cls-rank-n.gold{color:var(--or)}
+.cls-rank-n.silver{color:#888}
+.cls-rank-n.bronze{color:#8b6020}
+.cls-player-name{font-weight:500;color:var(--brun)}
+.cls-rooms{color:var(--gris);font-size:0.9rem;text-align:center}
+.cls-score{font-family:'Cinzel Decorative',serif;font-size:0.9rem;color:var(--or);text-align:right}
+.cls-score-form{background:white;border:1px solid var(--creme3);border-radius:10px;padding:24px;margin-bottom:24px;box-shadow:0 2px 8px var(--ombre)}
+.cls-form-title{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;color:var(--brun);margin-bottom:14px}
+.cls-form-row{display:flex;gap:12px}
+.cls-input{flex:1;padding:11px 16px;border:1.5px solid var(--creme3);border-radius:6px;font-family:'Inter',sans-serif;font-size:0.9rem;color:var(--brun);outline:none;transition:border 0.2s}
+.cls-input:focus{border-color:var(--or)}
+
+/* ===== VICTOIRE FINALE ===== */
+#final-victory{position:fixed;inset:0;z-index:600;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px}
+.fv-bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:brightness(0.4)}
+.fv-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(245,240,232,0.1),rgba(245,240,232,0.88))}
+.fv-box{position:relative;z-index:2;background:rgba(245,240,232,0.97);padding:52px 64px;border-radius:16px;box-shadow:0 24px 60px rgba(58,42,20,0.5);max-width:560px;width:92%}
+.fv-title{font-family:'Cinzel Decorative',serif;font-size:clamp(1.5rem,4vw,2.8rem);color:var(--brun);margin-bottom:8px}
+.fv-sub{font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--gris);font-size:1.1rem;margin-bottom:36px}
+.fv-stats{display:flex;gap:40px;justify-content:center;margin-bottom:40px}
+.fv-stat-n{font-family:'Cinzel Decorative',serif;font-size:2rem;color:var(--or);display:block}
+.fv-stat-l{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.2em;color:var(--gris)}
+.confetti-container{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:768px){
+  .enq-layout{grid-template-columns:1fr}
+  .e-options{grid-template-columns:1fr}
+  .map-grid{grid-template-columns:repeat(2,1fr)}
+  .cls-podium{gap:8px}
+  .fv-box{padding:32px 28px}
+  .fv-stats{gap:20px}
+}
+@media(max-width:480px){
+  .map-grid{grid-template-columns:1fr 1fr}
+  .indices-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ÉCRAN UNLOCK AUDIO (obligatoire navigateur) -->
+<div id="audioUnlock" style="position:fixed;inset:0;z-index:10000;background:var(--creme);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;text-align:center;padding:40px">
+  <div style="font-size:4rem">🎭</div>
+  <div style="font-family:'Cinzel Decorative',serif;font-size:clamp(1.8rem,6vw,3rem);color:var(--brun);letter-spacing:0.1em">ARCANA</div>
+  <div style="font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--gris);font-size:1.1rem;max-width:360px">Vingt portes. Mille secrets. Une seule vérité.</div>
+  <button onclick="unlockAndStart()" style="padding:18px 48px;background:var(--or);color:var(--creme);border:none;font-family:'Cinzel Decorative',serif;font-size:0.85rem;letter-spacing:0.2em;cursor:pointer;border-radius:8px;box-shadow:0 4px 20px rgba(184,150,62,0.4);transition:all 0.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+    ▶ COMMENCER
+  </button>
+  <div style="font-size:0.75rem;color:var(--creme3);letter-spacing:0.15em">SON + MUSIQUE ACTIVÉS</div>
+</div>
+<div id="loader" style="display:none">
+  <div class="loader-ornament">
+    <svg viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="80" cy="80" r="70" stroke="#ccc2a8" stroke-width="1" opacity="0.4"/>
+      <circle cx="80" cy="80" r="55" stroke="#b8963e" stroke-width="1.5">
+        <animateTransform attributeName="transform" type="rotate" from="0 80 80" to="360 80 80" dur="8s" repeatCount="indefinite"/>
+      </circle>
+      <path d="M80 20 L88 60 L80 55 L72 60 Z" fill="#b8963e" opacity="0.8"/>
+      <path d="M80 140 L88 100 L80 105 L72 100 Z" fill="#b8963e" opacity="0.8"/>
+      <path d="M20 80 L60 72 L55 80 L60 88 Z" fill="#b8963e" opacity="0.8"/>
+      <path d="M140 80 L100 72 L105 80 L100 88 Z" fill="#b8963e" opacity="0.8"/>
+      <circle cx="80" cy="80" r="18" fill="#f5f0e8" stroke="#b8963e" stroke-width="1.5"/>
+      <text x="80" y="85" text-anchor="middle" font-family="Cinzel Decorative, serif" font-size="14" fill="#b8963e">A</text>
+      <circle cx="80" cy="80" r="4" fill="#b8963e" opacity="0.3">
+        <animate attributeName="r" values="4;12;4" dur="2s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.3;0;0.3" dur="2s" repeatCount="indefinite"/>
+      </circle>
+    </svg>
+  </div>
+  <div class="loader-title">ARCANA</div>
+  <div class="loader-sub">Préparez-vous à l'aventure...</div>
+  <div class="loader-progress"><div class="loader-bar"></div></div>
+</div>
+
+<!-- MENU -->
+<div id="menu">
+  <div class="menu-hero" id="menuHero" style="background-image:url('https://images.unsplash.com/photo-1555881400-74d7acaacd8b?w=1600&q=80')"></div>
+  <div class="menu-overlay"></div>
+  <div class="menu-content">
+    <div class="menu-logo">ARCANA</div>
+    <div class="menu-tagline">Vingt portes. Mille secrets. Une seule vérité.</div>
+    <div class="menu-btns">
+      <button class="btn btn-or" onclick="showMap()">⬡ Commencer l'aventure</button>
+      <button class="btn btn-brun" onclick="showEnquetes()">🔍 Enquête du jour</button>
+      <button class="btn btn-outline" onclick="showClassement()">🏆 Classement</button>
+      <button class="btn btn-outline" onclick="resetGame()">↺ Recommencer</button>
+      <button class="btn btn-outline muteBtn" onclick="AUDIO.toggleMute()" style="font-size:1rem">🔊 Son activé</button>
+    </div>
+    <div class="menu-stats">
+      <div class="stat"><span class="stat-n" id="statRooms">0<small style="font-size:0.6em;opacity:0.6">/60</small></span><span class="stat-l">Salles</span></div>
+      <div class="stat"><span class="stat-n" id="statTime">—</span><span class="stat-l">Meilleur</span></div>
+      <div class="stat"><span class="stat-n" id="statStreak">0</span><span class="stat-l">Série</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAP -->
+<div id="map-screen">
+  <div class="map-header">
+    <div>
+      <div class="map-title-h">Carte des Salles</div>
+      <div class="map-prog" id="mapProg">0 / 60 complétées</div>
+      <div class="map-progress-bar"><div class="map-progress-fill" id="mapFill" style="width:0%"></div></div>
+    </div>
+    <button class="hud-btn" onclick="showMenu()">← Menu</button>
+  </div>
+  <div class="map-grid" id="mapGrid"></div>
+</div>
+
+<!-- JEU -->
+<div id="game-screen">
+  <div class="scene-img" id="sceneImg"></div>
+  <div class="scene-vignette"></div>
+  <div class="scene-bottom"></div>
+  <div class="game-hud">
+    <div class="hud-info">
+      <div class="hud-num" id="hudNum">SALLE 01</div>
+      <div class="hud-name" id="hudName">—</div>
+    </div>
+    <div class="hud-center">
+      <div class="hud-timer" id="hudTimer">00:00</div>
+    </div>
+    <div class="hud-right">
+      <button class="hud-btn muteBtn" onclick="AUDIO.toggleMute()">🔊</button>
+      <button class="hud-btn" onclick="showHintDirect()">💡 Indice</button>
+      <button class="hud-btn" onclick="showMap()">⬡ Carte</button>
+      <button class="hud-btn" onclick="showMenu()" style="background:var(--brun);color:var(--creme);border-color:var(--brun2)">← Menu</button>
+    </div>
+  </div>
+  <div id="hotspotsContainer"></div>
+</div>
+
+<!-- MODAL ENIGME -->
+<div class="modal-bg" id="enigmeModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-img-wrap">
+      <div id="mIllustration" style="width:100%;height:100%"></div>
+      <div class="modal-img-overlay"></div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-label" id="mLabel">Énigme</div>
+      <div class="modal-title" id="mTitle">—</div>
+      <div class="modal-sub" id="mSub">—</div>
+      <div class="modal-text" id="mText">—</div>
+      <div class="e-options" id="mOptions"></div>
+      <div class="e-input-row" id="mInputRow" style="display:none">
+        <input class="e-input" id="mInput" type="text" placeholder="Votre réponse…" autocomplete="off">
+        <button class="btn-valider" onclick="checkInput()">Valider</button>
+      </div>
+      <div class="hint-row">
+        <button class="hint-btn" onclick="toggleHint()">💡 Voir un indice</button>
+      </div>
+      <div class="hint-box" id="mHint"></div>
+      <div class="feedback" id="mFeedback"></div>
+    </div>
+  </div>
+</div>
+
+<!-- VICTOIRE SALLE -->
+<div id="victory-room">
+  <div class="vic-bg" id="vicBg"></div>
+  <div class="vic-content">
+    <div class="vic-stars" id="vicStars">★★★</div>
+    <div class="vic-title">Salle résolue !</div>
+    <div class="vic-sub" id="vicSub">Vous avancez dans le mystère…</div>
+    <div class="vic-time" id="vicTime">00:00</div>
+    <div class="vic-btns">
+      <button class="btn btn-or" id="vicNext" onclick="nextRoom()">Salle suivante →</button>
+      <button class="btn btn-outline" onclick="showMap()">⬡ Voir la carte</button>
+      <button class="btn btn-outline" onclick="showMenu()" style="font-size:0.75rem;opacity:0.7">← Menu principal</button>
+    </div>
+  </div>
+</div>
+
+<!-- ENQUÊTES -->
+<div id="enquetes-screen">
+  <div class="enq-hero">
+    <img id="enqHeroImg" src="" alt="">
+    <div class="enq-hero-overlay"></div>
+    <button class="enq-back" onclick="showMenu()">← Retour</button>
+    <div class="enq-hero-content">
+      <div class="enq-daily-label"><span class="enq-daily-dot"></span>Enquête du jour</div>
+      <div class="enq-case-title" id="enqTitle">—</div>
+      <div class="enq-tagline" id="enqTagline">—</div>
+    </div>
+  </div>
+  <div class="enq-body" id="enqBody"></div>
+</div>
+
+<!-- CLASSEMENT -->
+<div id="classement-screen">
+  <div class="cls-header">
+    <button class="hud-btn" onclick="showMenu()">← Menu</button>
+    <div class="cls-title">🏆 Classement Global</div>
+  </div>
+  <div class="cls-body" id="clsBody"></div>
+</div>
+
+<!-- VICTOIRE FINALE -->
+<div id="final-victory">
+  <div class="fv-bg" style="background-image:url('https://images.unsplash.com/photo-1509773896068-7fd415d91e2e?w=1600&q=80')"></div>
+  <div class="fv-overlay"></div>
+  <div class="confetti-container" id="confetti"></div>
+  <div class="fv-box">
+    <div class="fv-title">ARCANA VAINCU !</div>
+    <div class="fv-sub">Soixante salles. Trois actes. Une seule vérité.</div>
+    <div class="fv-stats">
+      <div><span class="fv-stat-n" id="fvRooms">60</span><span class="fv-stat-l">Salles</span></div>
+      <div><span class="fv-stat-n" id="fvTime">—</span><span class="fv-stat-l">Temps</span></div>
+      <div><span class="fv-stat-n" id="fvScore">—</span><span class="fv-stat-l">Score</span></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;align-items:center">
+      <button class="btn btn-or" onclick="showClassement()" style="width:100%;max-width:280px">🏆 Voir le classement</button>
+      <button class="btn btn-outline" onclick="resetGame();showMenu()" style="width:100%;max-width:280px">↺ Rejouer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG IMAGES UNSPLASH (gratuites & libres)
+// ============================================================
+const UNSPLASH = {
+  menu:'https://images.unsplash.com/photo-1555881400-74d7acaacd8b?w=1600&q=80',
+  // Salles — picsum.photos garanti
+  rooms:[
+    'https://picsum.photos/id/1029/900/500', // antichambre
+    'https://picsum.photos/id/1060/900/500', // bibliothèque
+    'https://picsum.photos/id/139/900/500',  // forêt
+    'https://picsum.photos/id/1011/900/500', // tour horloge
+    'https://picsum.photos/id/160/900/500',  // caveau
+    'https://picsum.photos/id/145/900/500',  // grenier
+    'https://picsum.photos/id/1015/900/500', // cité engloutie
+    'https://picsum.photos/id/1036/900/500', // forge
+    'https://picsum.photos/id/110/900/500',  // observatoire
+    'https://picsum.photos/id/1002/900/500', // vaisseau
+    'https://picsum.photos/id/355/900/500',  // cirque
+    'https://picsum.photos/id/1044/900/500', // galerie
+    'https://picsum.photos/id/167/900/500',  // crypte
+    'https://picsum.photos/id/1042/900/500', // manoir
+    'https://picsum.photos/id/1018/900/500', // lac miroirs
+    'https://picsum.photos/id/1062/900/500', // donjon
+    'https://picsum.photos/id/194/900/500',  // temple
+    'https://picsum.photos/id/1047/900/500', // catacombes
+    'https://picsum.photos/id/1012/900/500', // chambre juge
+    'https://picsum.photos/id/1019/900/500', // salle maître
+  ],
+  // Enigmes — picsum.photos : garanti sans CORS, chargement fiable
+  // ID unique par salle pour image différente à chaque fois
+  enigmes:[
+    'https://picsum.photos/id/1029/700/320', // miroir / château
+    'https://picsum.photos/id/1060/700/320', // bibliothèque / livres
+    'https://picsum.photos/id/139/700/320',  // forêt
+    'https://picsum.photos/id/1011/700/320', // horloge / engrenages
+    'https://picsum.photos/id/160/700/320',  // caveau sombre
+    'https://picsum.photos/id/145/700/320',  // grenier / maison
+    'https://picsum.photos/id/1015/700/320', // eau / profondeurs
+    'https://picsum.photos/id/1036/700/320', // forge / feu
+    'https://picsum.photos/id/110/700/320',  // observatoire / étoiles
+    'https://picsum.photos/id/1002/700/320', // navire / mer
+    'https://picsum.photos/id/355/700/320',  // cirque / nuit
+    'https://picsum.photos/id/1044/700/320', // portraits / visages
+    'https://picsum.photos/id/167/700/320',  // crypte / pierres
+    'https://picsum.photos/id/1042/700/320', // manoir / couloir
+    'https://picsum.photos/id/1018/700/320', // lac / miroir d'eau
+    'https://picsum.photos/id/1062/700/320', // donjon / murs
+    'https://picsum.photos/id/194/700/320',  // temple / ruines
+    'https://picsum.photos/id/1047/700/320', // catacombes / tunnels
+    'https://picsum.photos/id/1012/700/320', // juge / justice
+    'https://picsum.photos/id/1019/700/320', // salle finale / lumière
+  ],
+  // Enquêtes
+  enquetes:[
+    'https://picsum.photos/id/1062/900/320',
+    'https://picsum.photos/id/1074/900/320',
+    'https://picsum.photos/id/145/900/320',
+    'https://picsum.photos/id/167/900/320',
+    'https://picsum.photos/id/1047/900/320',
+  ],
+  // Suspects
+  suspects:[
+    'https://picsum.photos/id/1005/300/200',
+    'https://picsum.photos/id/1011/300/200',
+    'https://picsum.photos/id/1025/300/200',
+    'https://picsum.photos/id/1074/300/200',
+    'https://picsum.photos/id/177/300/200',
+    'https://picsum.photos/id/453/300/200',
+  ],
+  // Indices
+  indices:[
+    'https://picsum.photos/id/20/300/160',
+    'https://picsum.photos/id/67/300/160',
+    'https://picsum.photos/id/101/300/160',
+    'https://picsum.photos/id/119/300/160',
+  ]
+};
+
+// ============================================================
+// ILLUSTRATIONS SVG PAR ÉNIGME — dessinées en code, toujours visibles
+// ============================================================
+const ENIGME_SVG = [
+
+// 1 — Miroir : deux bras côte à côte, montre lisible avec chiffres 1-12 et aiguilles pointant sur 7
+`<svg viewBox="0 0 620 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:280px;display:block">
+<defs>
+  <radialGradient id="bg1g" cx="50%" cy="40%" r="70%"><stop offset="0%" stop-color="#2a1a0a"/><stop offset="100%" stop-color="#0d0608"/></radialGradient>
+  <radialGradient id="watch1" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#f0e8d0"/><stop offset="100%" stop-color="#d4c4a0"/></radialGradient>
+</defs>
+<rect width="620" height="280" fill="url(#bg1g)"/>
+
+<!-- Titre des deux colonnes -->
+<text x="155" y="28" text-anchor="middle" font-family="Georgia,serif" font-size="13" fill="#c8a96e" opacity="0.8" font-style="italic">Reflet dans le miroir</text>
+<text x="465" y="28" text-anchor="middle" font-family="Georgia,serif" font-size="13" fill="#c8a96e" opacity="0.8" font-style="italic">Votre vrai poignet</text>
+<line x1="310" y1="15" x2="310" y2="265" stroke="#b8963e" stroke-width="1.5" stroke-dasharray="8,5" opacity="0.5"/>
+
+<!-- ══ CÔTÉ GAUCHE : reflet (montre à gauche = inversé) ══ -->
+<!-- Bras gauche du reflet — montre au poignet GAUCHE -->
+<rect x="60" y="100" width="190" height="55" rx="28" fill="#c8a080" stroke="#8b5a30" stroke-width="2"/>
+<!-- Bracelet de montre -->
+<rect x="195" y="108" width="40" height="12" rx="4" fill="#5a3a18" stroke="#3a2010" stroke-width="1"/>
+<rect x="195" y="128" width="40" height="12" rx="4" fill="#5a3a18" stroke="#3a2010" stroke-width="1"/>
+<!-- Boîtier montre -->
+<circle cx="230" cy="127" r="26" fill="#c0b080" stroke="#8b7040" stroke-width="2.5"/>
+<circle cx="230" cy="127" r="22" fill="url(#watch1)" stroke="#a09060" stroke-width="1"/>
+<!-- Chiffres 1-12 sur le cadran -->
+<text x="230" y="110" text-anchor="middle" font-family="Georgia,serif" font-size="7" font-weight="bold" fill="#3a2a10">12</text>
+<text x="248" y="115" text-anchor="middle" font-family="Georgia,serif" font-size="7" fill="#3a2a10">1</text>
+<text x="252" y="129" text-anchor="middle" font-family="Georgia,serif" font-size="7" fill="#3a2a10">2</text>
+<text x="248" y="143" text-anchor="middle" font-family="Georgia,serif" font-size="7" fill="#3a2a10">3</text>
+<text x="230" y="148" text-anchor="middle" font-family="Georgia,serif" font-size="7" fill="#3a2a10">6</text>
+<text x="212" y="143" text-anchor="middle" font-family="Georgia,serif" font-size="7" fill="#3a2a10">9</text>
+<text x="208" y="129" text-anchor="middle" font-family="Georgia,serif" font-size="7" fill="#3a2a10">10</text>
+<text x="212" y="115" text-anchor="middle" font-family="Georgia,serif" font-size="7" fill="#3a2a10">11</text>
+<!-- Chiffre 7 bien visible (la réponse à trouver) -->
+<text x="241" y="145" text-anchor="middle" font-family="Georgia,serif" font-size="7.5" font-weight="bold" fill="#8b2020">7</text>
+<text x="219" y="115" text-anchor="middle" font-family="Georgia,serif" font-size="7" fill="#3a2a10">4</text>
+<text x="219" y="143" text-anchor="middle" font-family="Georgia,serif" font-size="7" fill="#3a2a10">5</text>
+<text x="241" y="115" text-anchor="middle" font-family="Georgia,serif" font-size="7" fill="#3a2a10">8</text>
+<!-- Aiguille des heures vers 10 -->
+<line x1="230" y1="127" x2="219" y2="115" stroke="#2a1a08" stroke-width="2.5" stroke-linecap="round"/>
+<!-- Aiguille des minutes vers 7 (=35 min, angle ~210°) -->
+<line x1="230" y1="127" x2="241" y2="145" stroke="#2a1a08" stroke-width="1.5" stroke-linecap="round"/>
+<!-- Trotteuse -->
+<line x1="230" y1="127" x2="233" y2="108" stroke="#e84040" stroke-width="1" stroke-linecap="round"/>
+<circle cx="230" cy="127" r="2" fill="#5a3a18"/>
+<!-- Label -->
+<text x="155" y="195" text-anchor="middle" font-family="Georgia,serif" font-size="11" fill="#e84040" font-weight="bold">⟵ poignet GAUCHE</text>
+<text x="155" y="212" text-anchor="middle" font-family="Georgia,serif" font-size="10" fill="#c8a96e" opacity="0.7">(dans le reflet)</text>
+
+<!-- ══ CÔTÉ DROIT : réalité (vous portez la montre à droite) ══ -->
+<!-- Bras droit — PAS de montre -->
+<rect x="370" y="100" width="190" height="55" rx="28" fill="#c8a080" stroke="#8b5a30" stroke-width="2"/>
+<!-- Marque de tan là où serait la montre (côté droit = poignet droit dans la vraie vie) -->
+<rect x="370" y="108" width="38" height="39" rx="6" fill="rgba(180,130,80,0.3)" stroke="rgba(180,130,80,0.4)" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="389" y="132" text-anchor="middle" font-family="Georgia,serif" font-size="9" fill="#8b6030" opacity="0.6" font-style="italic">montre</text>
+<text x="389" y="144" text-anchor="middle" font-family="Georgia,serif" font-size="9" fill="#8b6030" opacity="0.6" font-style="italic">habituellement</text>
+<text x="465" y="195" text-anchor="middle" font-family="Georgia,serif" font-size="11" fill="#4a8a50" font-weight="bold">poignet DROIT ⟶</text>
+<text x="465" y="212" text-anchor="middle" font-family="Georgia,serif" font-size="10" fill="#c8a96e" opacity="0.7">(votre vraie main)</text>
+
+<!-- Question en bas -->
+<rect x="60" y="230" width="500" height="38" rx="6" fill="rgba(58,42,20,0.6)" stroke="#b8963e" stroke-width="1.5"/>
+<text x="310" y="248" text-anchor="middle" font-family="Georgia,serif" font-size="12" fill="#e8d090">Le reflet montre la montre à gauche — regardez bien le cadran.</text>
+<text x="310" y="263" text-anchor="middle" font-family="Georgia,serif" font-size="12" fill="#e8d090">Quel est le <tspan font-weight="bold" fill="#e8c060">dernier chiffre</tspan> que l'aiguille des minutes pointe ?</text>
+</svg>`,
+
+// 2 — Livre retourné avec IIIVXX lisible sur la tranche
+`<svg viewBox="0 0 620 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:280px;display:block">
+<defs><linearGradient id="bg2g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#120808"/><stop offset="100%" stop-color="#080404"/></linearGradient></defs>
+<rect width="620" height="280" fill="url(#bg2g)"/>
+<!-- Étagère du fond avec livres normaux, dans l'ombre -->
+<rect x="0" y="230" width="620" height="14" fill="#2a1808" stroke="#3a2010" stroke-width="1"/>
+${[0,1,2,4,5,7,8,9,10,11].map(i=>`<rect x="${20+i*55}" y="${165+i%3*5}" width="40" height="${55-i%3*5}" rx="1" fill="${['#6b1a1a','#1a3a6b','#2a5a2a','#6b4a1a','#3a1a6b'][i%5]}" stroke="rgba(0,0,0,0.4)" stroke-width="0.5" opacity="0.6"/>`).join('')}
+<!-- Lampe de bureau -->
+<rect x="295" y="160" width="10" height="68" fill="#1a1208" stroke="#6a4020" stroke-width="1"/>
+<path d="M265,160 Q310,145 355,160 L348,176 Q310,163 272,176 Z" fill="#2a1808" stroke="#8b6020" stroke-width="1.5"/>
+<ellipse cx="310" cy="210" rx="160" ry="45" fill="rgba(220,180,60,0.07)"/>
+<!-- Zone éclairée sur la table -->
+<rect x="100" y="195" width="420" height="36" rx="4" fill="#1a1208" stroke="#3a2010" stroke-width="1"/>
+<!-- LIVRE RETOURNÉ (à l'envers) — mis en évidence avec un cercle lumineux -->
+<circle cx="310" cy="128" r="72" fill="rgba(220,180,60,0.06)" stroke="#b8963e" stroke-width="1" stroke-dasharray="6,4"/>
+<!-- Le livre retourné (rotation 180°) posé sur l'étagère -->
+<g transform="translate(310,128) rotate(180)">
+  <!-- Corps du livre -->
+  <rect x="-28" y="-55" width="56" height="110" rx="3" fill="#8b6020" stroke="#c8a96e" stroke-width="2.5"/>
+  <!-- Dos du livre (côté ouvert) -->
+  <rect x="-28" y="-55" width="8" height="110" fill="#6a4a18" stroke="#8b6020" stroke-width="1"/>
+  <!-- Tranche du livre avec le texte IIIVXX bien lisible -->
+  <rect x="-20" y="-48" width="48" height="96" fill="#c8a060" stroke="#8b6020" stroke-width="1"/>
+  <!-- Décoration dorée haut et bas -->
+  <rect x="-28" y="-55" width="56" height="10" rx="2" fill="#c8a96e"/>
+  <rect x="-28" y="45" width="56" height="10" rx="2" fill="#c8a96e"/>
+  <!-- IIIVXX en grand, bien visible -->
+  <text x="4" y="12" text-anchor="middle" font-family="Georgia,serif" font-size="19" font-weight="bold" fill="#3a1a08" letter-spacing="2">IIIVXX</text>
+</g>
+<!-- Flèche "retourné" -->
+<text x="405" y="105" font-family="Georgia,serif" font-size="11" fill="#c8a96e" opacity="0.9">↖ retourné</text>
+<text x="405" y="120" font-family="Georgia,serif" font-size="10" fill="#c8a96e" opacity="0.7">à l'envers !</text>
+<!-- Loupe posée à côté pour attirer l'œil -->
+<circle cx="400" cy="150" r="22" fill="none" stroke="#b8963e" stroke-width="2.5"/>
+<line x1="416" y1="167" x2="432" y2="183" stroke="#b8963e" stroke-width="3" stroke-linecap="round"/>
+<rect x="108" y="200" width="404" height="26" rx="3" fill="rgba(184,150,62,0.1)" stroke="#b8963e" stroke-width="1"/>
+<text x="310" y="218" text-anchor="middle" font-family="Georgia,serif" font-size="12" fill="#e8d090">Ce livre est retourné. Lisez sa tranche et convertissez <tspan font-weight="bold" fill="#e8c060">IIIVXX</tspan> en chiffre arabe.</text>
+</svg>`,
+
+// 3 — Forêt nocturne brumeuse, arbres immenses
+`<svg viewBox="0 0 620 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:280px;display:block">
+<defs><radialGradient id="fg3" cx="50%" cy="70%" r="60%"><stop offset="0%" stop-color="#0d1a0a"/><stop offset="100%" stop-color="#060c04"/></radialGradient></defs>
+<rect width="620" height="280" fill="url(#fg3)"/>
+<!-- Lune -->
+<circle cx="310" cy="40" r="28" fill="#e8e0c0" opacity="0.15"/>
+<circle cx="310" cy="40" r="24" fill="#f0e8c8" opacity="0.1"/>
+<!-- Brume basse -->
+<ellipse cx="310" cy="255" rx="400" ry="40" fill="rgba(220,220,200,0.08)"/>
+<ellipse cx="160" cy="265" rx="200" ry="25" fill="rgba(220,220,200,0.06)"/>
+<ellipse cx="460" cy="260" rx="200" ry="20" fill="rgba(220,220,200,0.05)"/>
+<!-- Arbres — silhouettes noires, sans numéros -->
+${[40,110,180,250,320,390,460,530].map((x,i)=>{
+const h=120+i*15; const w=18+i*3;
+return `<rect x="${x-w/2}" y="${280-h}" width="${w}" height="${h}" rx="3" fill="#0a1008" stroke="#142010" stroke-width="1"/>
+<ellipse cx="${x}" cy="${280-h}" rx="${30+i*4}" ry="${22+i*3}" fill="#0d1808" stroke="#142010" stroke-width="1"/>
+<ellipse cx="${x}" cy="${280-h-15}" rx="${22+i*3}" ry="${16+i*2}" fill="#0a1608"/>`;
+}).join('')}
+<!-- Lucioles -->
+${Array.from({length:18},(_,i)=>`<circle cx="${60+i*30}" cy="${80+Math.sin(i*1.3)*60}" r="2" fill="#c8e070" opacity="${0.3+Math.sin(i)*0.3}"/>`).join('')}
+<!-- Chemin mystérieux -->
+<path d="M280,280 Q300,220 310,160 Q318,100 305,60" fill="none" stroke="rgba(200,180,100,0.12)" stroke-width="8"/>
+<text x="310" y="272" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="13" fill="#c8a96e" opacity="0.6">La forêt murmure à ceux qui savent compter</text>
+</svg>`,
+
+// 4 — Tour en pierre avec horloge dont les aiguilles sont lisibles mais pas les chiffres révélateurs
+`<svg viewBox="0 0 620 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:280px;display:block">
+<rect width="620" height="280" fill="#08080a"/>
+<!-- Ciel nocturne -->
+<rect width="620" height="200" fill="#080810"/>
+${Array.from({length:50},(_,i)=>`<circle cx="${Math.random()*620}" cy="${Math.random()*180}" r="${Math.random()*1.5+0.3}" fill="white" opacity="${Math.random()*0.6+0.2}"/>`).join('')}
+<!-- Tour en pierre -->
+<rect x="200" y="60" width="220" height="220" fill="#1a1810" stroke="#3a3020" stroke-width="2"/>
+<!-- Créneaux -->
+${[200,240,280,320,360,400].map(x=>`<rect x="${x}" y="40" width="30" height="30" fill="#1a1810" stroke="#3a3020" stroke-width="1"/>`).join('')}
+<!-- Pierre texture -->
+${Array.from({length:8},(_,r)=>Array.from({length:3},(_,c)=>`<rect x="${205+c*70}" y="${70+r*22}" width="65" height="18" fill="none" stroke="#2a2418" stroke-width="0.5" opacity="0.6"/>`).join('')).join('')}
+<!-- Fenêtre en ogive -->
+<path d="M270,100 Q270,80 310,75 Q350,80 350,100 L350,140 L270,140 Z" fill="#0a0a18" stroke="#6a5820" stroke-width="2"/>
+<!-- Cadran de l'horloge — GRAND, lisible, sans la réponse écrite -->
+<circle cx="310" cy="168" r="52" fill="#0a0c0a" stroke="#b8963e" stroke-width="3"/>
+<circle cx="310" cy="168" r="46" fill="none" stroke="#b8963e" stroke-width="1" opacity="0.3"/>
+<!-- Marques des heures seulement (pas de chiffres) -->
+${Array.from({length:12},(_,i)=>{
+const a=(i/12)*Math.PI*2-Math.PI/2;
+return `<line x1="${310+Math.cos(a)*38}" y1="${168+Math.sin(a)*38}" x2="${310+Math.cos(a)*46}" y2="${168+Math.sin(a)*46}" stroke="#b8963e" stroke-width="3" stroke-linecap="round"/>`;
+}).join('')}
+<!-- Petites marques -->
+${Array.from({length:60},(_,i)=>{if(i%5===0)return'';const a=(i/60)*Math.PI*2-Math.PI/2;return `<line x1="${310+Math.cos(a)*43}" y1="${168+Math.sin(a)*43}" x2="${310+Math.cos(a)*46}" y2="${168+Math.sin(a)*46}" stroke="#b8963e" stroke-width="0.8" opacity="0.3"/>`;}).join('')}
+<!-- Aiguille des HEURES (vers la droite = 3h) -->
+<line x1="310" y1="168" x2="346" y2="168" stroke="#e8d090" stroke-width="6" stroke-linecap="round"/>
+<line x1="310" y1="168" x2="290" y2="168" stroke="#e8d090" stroke-width="6" stroke-linecap="round" opacity="0.4"/>
+<!-- Aiguille des MINUTES (vers le bas = 30min) -->
+<line x1="310" y1="168" x2="310" y2="210" stroke="#d0b870" stroke-width="4" stroke-linecap="round"/>
+<line x1="310" y1="168" x2="310" y2="148" stroke="#d0b870" stroke-width="4" stroke-linecap="round" opacity="0.3"/>
+<!-- Aiguille des secondes -->
+<line x1="310" y1="168" x2="303" y2="126" stroke="#e84040" stroke-width="1.5" stroke-linecap="round"/>
+<circle cx="310" cy="168" r="5" fill="#b8963e"/>
+<!-- Sol -->
+<rect x="0" y="250" width="620" height="30" fill="#14120a"/>
+<text x="310" y="272" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="13" fill="#c8a96e" opacity="0.6">L'horloge de la tour s'est arrêtée cette nuit-là</text>
+</svg>`,
+
+// 5 — Caveau : sarcophage avec serrures, chauve-souris, ambiance sang
+`<svg viewBox="0 0 620 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:280px;display:block">
+<defs><radialGradient id="fg5" cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="#1a0506"/><stop offset="100%" stop-color="#08020a"/></radialGradient></defs>
+<rect width="620" height="280" fill="url(#fg5)"/>
+<!-- Voûte en pierre -->
+<path d="M0,0 Q310,-30 620,0 L620,80 Q310,50 0,80 Z" fill="#120808" stroke="#2a1010" stroke-width="1"/>
+<!-- Murs latéraux avec torches -->
+${[-1,1].map(side=>{const x=side<0?60:560; return `
+<rect x="${x-10}" y="60" width="20" height="50" fill="#2a1808" stroke="#8b6020" stroke-width="1"/>
+<ellipse cx="${x}" cy="58" rx="8" ry="12" fill="rgba(255,140,40,0.4)"/>
+<ellipse cx="${x}" cy="52" rx="5" ry="8" fill="rgba(255,180,60,0.3)"/>
+<ellipse cx="${x}" cy="220" rx="60" ry="20" fill="rgba(255,120,20,0.05)"/>
+`;}).join('')}
+<!-- Sarcophage central -->
+<path d="M200,90 Q310,75 420,90 L430,240 Q310,250 190,240 Z" fill="#1a1008" stroke="#8b4020" stroke-width="2.5"/>
+<path d="M210,95 Q310,82 410,95 L420,235 Q310,244 200,235 Z" fill="none" stroke="#6a3010" stroke-width="1" opacity="0.5"/>
+<!-- Gravure sur le sarcophage — chauve-souris stylisée -->
+<path d="M280,150 Q260,130 240,140 Q255,155 270,150 Q285,160 310,158 Q335,160 350,150 Q365,155 380,140 Q360,130 340,150 Q325,142 310,144 Q295,142 280,150 Z" fill="#2a1008" stroke="#6a3010" stroke-width="1.5"/>
+<!-- 4 cadenas fermés -->
+${[230,270,340,380].map((x,i)=>`
+<rect x="${x}" y="195" width="22" height="18" rx="3" fill="#1a1008" stroke="#8b6020" stroke-width="1.5"/>
+<path d="M${x+6},195 Q${x+11},184 ${x+16},195" fill="none" stroke="#8b6020" stroke-width="2"/>
+<circle cx="${x+11}" cy="206" r="3" fill="#6a5020" opacity="0.8"/>
+`).join('')}
+<!-- Inscription latine mystérieuse -->
+<text x="310" y="268" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="13" fill="#c8a96e" opacity="0.6">Seul le bon nombre réveille ce qui dort ici</text>
+</svg>`,
+
+// 6 — Mur du grenier : chiffres gravés lisibles + tableau de décodage
+`<svg viewBox="0 0 620 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:280px;display:block">
+<defs><radialGradient id="bg6g" cx="50%" cy="40%" r="70%"><stop offset="0%" stop-color="#0e0e1a"/><stop offset="100%" stop-color="#060608"/></radialGradient></defs>
+<rect width="620" height="280" fill="url(#bg6g)"/>
+<!-- Pierres du mur -->
+${Array.from({length:30},(_,i)=>{const c=i%6,r=Math.floor(i/6);return `<rect x="${c*105+(r%2)*52}" y="${r*55}" width="100" height="50" fill="rgba(18,14,22,0.85)" stroke="rgba(60,50,80,0.3)" stroke-width="1"/>`;}).join('')}
+<!-- Halo fantomatique central -->
+<ellipse cx="310" cy="110" rx="260" ry="80" fill="rgba(180,160,240,0.05)"/>
+<!-- LES 5 CHIFFRES GRAVÉS — grands, lumineux, lisibles -->
+${[{n:'8',x:78},{n:'1',x:178},{n:'14',x:278},{n:'20',x:378},{n:'5',x:478}].map(c=>`
+  <rect x="${c.x-30}" y="60" width="60" height="75" rx="4" fill="rgba(160,140,220,0.08)" stroke="rgba(180,160,240,0.25)" stroke-width="1.5"/>
+  <text x="${c.x}" y="112" text-anchor="middle" font-family="Georgia,serif" font-size="38" font-weight="bold" fill="rgba(200,190,255,0.92)">${c.n}</text>
+`).join('')}
+<!-- Tirets entre les chiffres -->
+${[128,228,328,428].map(x=>`<line x1="${x}" y1="97" x2="${x+20}" y2="97" stroke="rgba(180,160,240,0.4)" stroke-width="2"/>`).join('')}
+<!-- Tableau de décodage A=1 B=2 ... sur un parchemin en bas -->
+<rect x="55" y="165" width="510" height="90" rx="5" fill="rgba(30,20,12,0.9)" stroke="#8b6020" stroke-width="2"/>
+<text x="310" y="183" text-anchor="middle" font-family="Georgia,serif" font-size="11" fill="#c8a96e" font-style="italic">— Clé de déchiffrement —</text>
+<!-- Tableau A à Z sur 2 lignes -->
+${['A=1','B=2','C=3','D=4','E=5','F=6','G=7','H=8','I=9','J=10','K=11','L=12','M=13'].map((s,i)=>`<text x="${68+i*37}" y="202" font-family="Georgia,serif" font-size="9.5" fill="#e8d090">${s}</text>`).join('')}
+${['N=14','O=15','P=16','Q=17','R=18','S=19','T=20','U=21','V=22','W=23','X=24','Y=25','Z=26'].map((s,i)=>`<text x="${68+i*37}" y="220" font-family="Georgia,serif" font-size="9.5" fill="#e8d090">${s}</text>`).join('')}
+<line x1="68" y1="225" x2="552" y2="225" stroke="#8b6020" stroke-width="0.5" opacity="0.5"/>
+<text x="310" y="243" text-anchor="middle" font-family="Georgia,serif" font-size="11" fill="#c8a96e">Quel mot forment ces chiffres ? Répondez en majuscules.</text>
+</svg>`,
+
+// 7 — Cité engloutie : colonnes sous-marines, lumière filtrée, bulles
+`<svg viewBox="0 0 620 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:280px;display:block">
+<defs><linearGradient id="fg7" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#030e18"/><stop offset="100%" stop-color="#01060f"/></linearGradient></defs>
+<rect width="620" height="280" fill="url(#fg7)"/>
+<!-- Rayons lumineux sous-marins -->
+${Array.from({length:6},(_,i)=>`<polygon points="${220+i*35},0 ${240+i*35},0 ${180+i*50},280 ${160+i*50},280" fill="rgba(100,200,220,0.03)"/>`).join('')}
+<!-- Fond marin -->
+<ellipse cx="310" cy="290" rx="400" ry="40" fill="#0a1a0e" opacity="0.8"/>
+<!-- Colonnes antiques effondrées -->
+${[60,160,310,460,560].map((x,i)=>{
+const h=80+i*20; const tilt=i%2===0?-3:2;
+return `<g transform="rotate(${tilt},${x},280)">
+<rect x="${x-12}" y="${280-h}" width="24" height="${h}" fill="#0d1a18" stroke="#1a3a30" stroke-width="1.5"/>
+<rect x="${x-18}" y="${280-h}" width="36" height="14" rx="2" fill="#0d1a18" stroke="#1a3a30" stroke-width="1"/>
+<rect x="${x-16}" y="${280-14}" width="32" height="14" rx="1" fill="#0d1a18" stroke="#1a3a30" stroke-width="1"/>
+</g>`;
+}).join('')}
+<!-- Algues -->
+${Array.from({length:12},(_,i)=>`<path d="M${40+i*48},280 Q${30+i*48},250 ${45+i*48},220 Q${55+i*48},250 ${50+i*48},280" fill="none" stroke="#1a4a20" stroke-width="${1+i%3}" opacity="0.6"/>`).join('')}
+<!-- Bulles -->
+${Array.from({length:20},(_,i)=>`<circle cx="${30+i*30}" cy="${20+Math.sin(i*0.8)*80}" r="${1+i%3}" fill="none" stroke="rgba(150,220,240,0.3)" stroke-width="0.8"/>`).join('')}
+<!-- Poissons fantômes -->
+<path d="M100,120 Q120,110 140,120 Q120,130 100,120 Z M140,120 L155,115 L150,120 L155,125 Z" fill="rgba(100,180,200,0.15)" stroke="rgba(100,180,200,0.2)" stroke-width="0.5"/>
+<text x="310" y="270" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="13" fill="rgba(100,200,220,0.5)">La cité gardienne ne laisse passer qu'un seul chemin</text>
+</svg>`,
+
+// 8 — Forge en activité : métal en fusion, enclume, braises
+`<svg viewBox="0 0 620 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:280px;display:block">
+<defs><radialGradient id="fg8" cx="50%" cy="80%" r="60%"><stop offset="0%" stop-color="#2a0800"/><stop offset="100%" stop-color="#0a0400"/></radialGradient></defs>
+<rect width="620" height="280" fill="url(#fg8)"/>
+<!-- Briques de la forge -->
+${Array.from({length:5},(_,r)=>Array.from({length:9},(_,c)=>`<rect x="${c*70+(r%2)*35}" y="${r*28}" width="65" height="24" fill="#1a0804" stroke="#2a1008" stroke-width="1" opacity="0.7"/>`).join('')).join('')}
+<!-- Fourneau en fusion -->
+<rect x="220" y="80" width="180" height="140" rx="6" fill="#1a0806" stroke="#8b3010" stroke-width="2"/>
+<ellipse cx="310" cy="220" rx="80" ry="20" fill="#2a0800" stroke="#8b3010" stroke-width="1"/>
+<!-- Lumière incandescente du fourneau -->
+<ellipse cx="310" cy="160" rx="70" ry="60" fill="rgba(255,80,10,0.12)"/>
+<ellipse cx="310" cy="180" rx="50" ry="40" fill="rgba(255,120,20,0.1)"/>
+<rect x="260" y="120" width="100" height="80" rx="4" fill="rgba(255,60,0,0.06)"/>
+<!-- Flammes -->
+${Array.from({length:8},(_,i)=>`<ellipse cx="${250+i*16}" cy="${195+Math.sin(i)*8}" rx="7" ry="${12+Math.cos(i)*4}" fill="${['#ff4000','#ff6020','#ff8040','#ffa060'][i%4]}" opacity="${0.4+Math.sin(i)*0.2}"/>`).join('')}
+<!-- Enclume -->
+<rect x="160" y="185" width="120" height="35" rx="4" fill="#1a1810" stroke="#3a3020" stroke-width="2"/>
+<rect x="175" y="220" width="90" height="40" rx="3" fill="#141210" stroke="#2a2818" stroke-width="1"/>
+<rect x="180" y="260" width="80" height="12" rx="2" fill="#0a0a08"/>
+<!-- Marteau posé -->
+<rect x="200" y="165" width="80" height="22" rx="3" fill="#2a2010" stroke="#4a3818" stroke-width="1.5" transform="rotate(-15, 240, 176)"/>
+<rect x="268" y="148" width="12" height="60" rx="3" fill="#3a2810" stroke="#4a3818" stroke-width="1" transform="rotate(-15, 274, 178)"/>
+<!-- Braises volantes -->
+${Array.from({length:15},(_,i)=>`<circle cx="${180+i*18}" cy="${100+Math.sin(i*1.4)*30}" r="${1+i%2}" fill="${['#ff6020','#ff8040','#ffa060'][i%3]}" opacity="${0.5+Math.random()*0.4}"/>`).join('')}
+<text x="310" y="272" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="13" fill="#c8a96e" opacity="0.6">La forge réclame un calcul précis avant de livrer ses armes</text>
+</svg>`,
+
+// 9 — Observatoire : dôme ouvert sur un ciel étoilé, télescope
+`<svg viewBox="0 0 620 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:280px;display:block">
+<defs><radialGradient id="fg9" cx="50%" cy="0%" r="80%"><stop offset="0%" stop-color="#040828"/><stop offset="100%" stop-color="#010410"/></radialGradient></defs>
+<rect width="620" height="280" fill="url(#fg9)"/>
+<!-- Étoiles -->
+${Array.from({length:80},(_,i)=>`<circle cx="${Math.random()*620}" cy="${Math.random()*200}" r="${Math.random()*2+0.3}" fill="white" opacity="${Math.random()*0.8+0.2}"/>`).join('')}
+<!-- Voie lactée -->
+<path d="M0,60 Q200,40 400,80 Q500,100 620,60" fill="none" stroke="rgba(200,200,255,0.08)" stroke-width="30"/>
+<!-- Dôme de l'observatoire -->
+<path d="M80,280 Q80,100 310,80 Q540,100 540,280 Z" fill="#0a0c18" stroke="#1a2040" stroke-width="2"/>
+<path d="M80,280 Q80,100 310,80 Q540,100 540,280" fill="none" stroke="#2a3060" stroke-width="1" opacity="0.5"/>
+<!-- Ouverture du dôme -->
+<path d="M260,80 Q310,70 360,80 L360,200 Q310,200 260,200 Z" fill="rgba(4,8,40,0.9)" stroke="#1a2040" stroke-width="1.5"/>
+<!-- Télescope -->
+<rect x="285" y="140" width="50" height="14" rx="5" fill="#1a2030" stroke="#2a3050" stroke-width="1.5" transform="rotate(-30,310,147)"/>
+<rect x="300" y="100" width="18" height="50" rx="3" fill="#141820" stroke="#1a2030" stroke-width="1" transform="rotate(-30,309,125)"/>
+<!-- Piédestal -->
+<rect x="298" y="210" width="24" height="50" rx="2" fill="#1a1a28" stroke="#2a2a40" stroke-width="1"/>
+<rect x="280" y="255" width="60" height="14" rx="3" fill="#141420" stroke="#1a1a30" stroke-width="1"/>
+<!-- Constellation mystérieuse (juste des étoiles reliées, sans indication) -->
+${[{x:380,y:60},{x:430,y:45},{x:470,y:70},{x:450,y:110},{x:400,y:105}].map((s,i,arr)=>`
+<line x1="${s.x}" y1="${s.y}" x2="${arr[(i+1)%5].x}" y2="${arr[(i+1)%5].y}" stroke="rgba(255,255,180,0.35)" stroke-width="1"/>
+<circle cx="${s.x}" cy="${s.y}" r="3.5" fill="#ffffa0" opacity="0.9"/>
+`).join('')}
+<!-- Sol de l'observatoire -->
+<rect x="80" y="255" width="460" height="25" fill="#0a0c18" stroke="#1a2030" stroke-width="1"/>
+<text x="310" y="272" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="13" fill="rgba(180,180,255,0.5)">Les étoiles forment un chiffre pour qui sait les lire</text>
+</svg>`,
+
+// 10 — Vaisseau fantôme : pont obscur, mer déchaînée
+`<svg viewBox="0 0 620 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:280px;display:block">
+<defs><linearGradient id="fg10" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#030814"/><stop offset="100%" stop-color="#010508"/></linearGradient></defs>
+<rect width="620" height="280" fill="url(#fg10)"/>
+<!-- Vagues -->
+${Array.from({length:5},(_,i)=>`<path d="M0,${180+i*20} Q155,${168+i*20} 310,${180+i*20} Q465,${192+i*20} 620,${180+i*20}" fill="none" stroke="rgba(40,80,120,${0.3-i*0.05})" stroke-width="${3-i*0.4}"/>`).join('')}
+<rect x="0" y="210" width="620" height="70" fill="#020810" opacity="0.8"/>
+<!-- Coque du navire -->
+<path d="M100,210 Q310,195 520,210 L510,250 Q310,260 110,250 Z" fill="#0a0c14" stroke="#1a2030" stroke-width="2"/>
+<!-- Mâts -->
+<rect x="178" y="60" width="8" height="155" fill="#0d1018" stroke="#1a2030" stroke-width="1"/>
+<rect x="310" y="30" width="8" height="180" fill="#0d1018" stroke="#1a2030" stroke-width="1"/>
+<rect x="430" y="70" width="8" height="145" fill="#0d1018" stroke="#1a2030" stroke-width="1"/>
+<!-- Voiles déchirées -->
+<path d="M186,65 L250,80 L240,130 L186,115 Z" fill="rgba(200,190,170,0.08)" stroke="rgba(200,190,170,0.15)" stroke-width="1"/>
+<path d="M318,35 L400,55 L390,120 L318,100 Z" fill="rgba(200,190,170,0.06)" stroke="rgba(200,190,170,0.12)" stroke-width="1"/>
+<!-- Hublots avec lueur -->
+${[150,210,280,340,410,470].map(x=>`<circle cx="${x}" cy="175" r="8" fill="#020810" stroke="#1a3050" stroke-width="1.5"/><circle cx="${x}" cy="175" r="5" fill="rgba(40,100,80,0.15)"/>`).join('')}
+<!-- Journal du capitaine sur le bastingage -->
+<rect x="260" y="155" width="80" height="55" rx="3" fill="#0a0c0a" stroke="#3a3020" stroke-width="1.5"/>
+<line x1="270" y1="170" x2="330" y2="170" stroke="#2a2018" stroke-width="1" opacity="0.6"/>
+<line x1="270" y1="182" x2="325" y2="182" stroke="#2a2018" stroke-width="1" opacity="0.6"/>
+<line x1="270" y1="194" x2="320" y2="194" stroke="#2a2018" stroke-width="1" opacity="0.6"/>
+<!-- Brume -->
+<ellipse cx="310" cy="100" rx="280" ry="60" fill="rgba(150,170,200,0.04)"/>
+<text x="310" y="270" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="13" fill="rgba(100,150,200,0.5)">Le journal du capitaine parle de nuits et de disparitions</text>
+</svg>`,
+
+// 11 — Cirque maudit : chapiteau, trapèze, clown dans l'ombre
+`<svg viewBox="0 0 620 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:280px;display:block">
+<defs><radialGradient id="fg11" cx="50%" cy="0%" r="80%"><stop offset="0%" stop-color="#180818"/><stop offset="100%" stop-color="#0a030a"/></radialGradient></defs>
+<rect width="620" height="280" fill="url(#fg11)"/>
+<!-- Chapiteau -->
+${Array.from({length:6},(_,i)=>{
+const x=i*104; const c=i%2===0?'#6a1a1a':'#1a1a6a';
+return `<polygon points="${x},0 ${x+104},0 ${x+52},120" fill="${c}" opacity="0.7" stroke="rgba(0,0,0,0.5)" stroke-width="1"/>`;
+}).join('')}
+<!-- Rideau latéral gauche -->
+<path d="M0,0 Q40,60 20,120 Q50,180 30,240 L0,240 Z" fill="#3a0a0a" stroke="#5a1a1a" stroke-width="1"/>
+<path d="M620,0 Q580,60 600,120 Q570,180 590,240 L620,240 Z" fill="#3a0a0a" stroke="#5a1a1a" stroke-width="1"/>
+<!-- Projecteur central -->
+<polygon points="270,0 350,0 390,200 230,200" fill="rgba(255,220,100,0.04)"/>
+<!-- Trapèze vide -->
+<line x1="250" y1="0" x2="270" y2="120" stroke="#4a3020" stroke-width="1.5"/>
+<line x1="370" y1="0" x2="350" y2="120" stroke="#4a3020" stroke-width="1.5"/>
+<rect x="255" y="120" width="110" height="6" rx="2" fill="#3a2010" stroke="#5a3818" stroke-width="1"/>
+<!-- Silhouette du clown — floue, dans l'ombre -->
+<ellipse cx="310" cy="205" rx="16" ry="18" fill="rgba(180,80,120,0.15)" stroke="rgba(200,100,140,0.2)" stroke-width="1"/>
+<rect x="296" y="221" width="28" height="38" rx="4" fill="rgba(180,80,120,0.1)" stroke="rgba(200,100,140,0.15)" stroke-width="1"/>
+<!-- Chapeau du clown -->
+<polygon points="295,205 310,170 325,205" fill="rgba(220,180,40,0.2)" stroke="rgba(220,180,40,0.3)" stroke-width="1"/>
+<!-- Piste circulaire -->
+<ellipse cx="310" cy="255" rx="200" ry="18" fill="none" stroke="#3a2a18" stroke-width="2"/>
+<ellipse cx="310" cy="255" rx="195" ry="14" fill="#0a0608"/>
+<!-- Étoiles du chapiteau -->
+${Array.from({length:10},(_,i)=>`<text x="${60+i*55}" y="25" font-size="10" fill="rgba(255,220,100,0.25)" text-anchor="middle">★</text>`).join('')}
+<text x="310" y="272" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="13" fill="rgba(200,100,140,0.5)">Le clown ne rit que si vous connaissez ce nombre unique</text>
+</svg>`,
+
+// 12 — Galerie des portraits : 5 cadres dans l'obscurité
+`<svg viewBox="0 0 620 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:280px;display:block">
+<defs><linearGradient id="fg12" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#140808"/><stop offset="100%" stop-color="#080404"/></linearGradient></defs>
+<rect width="620" height="280" fill="url(#fg12)"/>
+<!-- Lambris du bas -->
+<rect x="0" y="220" width="620" height="60" fill="#120a06" stroke="#2a1808" stroke-width="1"/>
+<rect x="0" y="220" width="620" height="6" fill="#1a1008" stroke="#2a1808" stroke-width="0.5"/>
+<!-- Parquet -->
+${Array.from({length:6},(_,i)=>`<line x1="0" y1="${228+i*8}" x2="620" y2="${228+i*8}" stroke="#1e1208" stroke-width="0.5" opacity="0.5"/>`).join('')}
+<!-- 5 portraits — uniquement des cadres, plaques avec dates, silhouettes indistinctes -->
+${[{x:20,yr:1823},{x:140,yr:1847},{x:260,yr:1892},{x:380,yr:1918},{x:500,yr:1965}].map((p,i)=>`
+<rect x="${p.x}" y="30" width="100" height="140" rx="3" fill="#1a0c08" stroke="#8b6020" stroke-width="2.5"/>
+<rect x="${p.x+6}" y="36" width="88" height="128" rx="1" fill="#120808"/>
+<!-- Silhouette de portrait très vague -->
+<ellipse cx="${p.x+50}" cy="78" rx="18" ry="20" fill="rgba(200,160,100,0.08)"/>
+<rect x="${p.x+32}" y="96" width="36" height="52" rx="3" fill="rgba(200,160,100,0.06)"/>
+<!-- Lumière de tableau -->
+<rect x="${p.x}" y="22" width="100" height="10" rx="2" fill="#2a1a08" stroke="#5a4020" stroke-width="1"/>
+<!-- Plaque avec année seulement -->
+<rect x="${p.x+15}" y="180" width="70" height="22" rx="2" fill="#0d0806" stroke="#6a5020" stroke-width="1.5"/>
+<text x="${p.x+50}" y="196" text-anchor="middle" font-family="Georgia,serif" font-size="12" fill="#c8a96e">${p.yr}</text>
+`).join('')}
+<!-- Yeux qui semblent vous suivre (suggestion uniquement) -->
+${[70,190,310,430,550].map(x=>`<ellipse cx="${x}" cy="78" rx="4" ry="5" fill="rgba(200,160,100,0.12)"/>`).join('')}
+<text x="310" y="268" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="13" fill="#c8a96e" opacity="0.6">Cinq ancêtres veillent — deux dates se répondent à travers le temps</text>
+</svg>`,
+
+// 13 — Crypte : autel de pierre, crânes en rangée, bougies
+`<svg viewBox="0 0 620 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:280px;display:block">
+<defs><radialGradient id="fg13" cx="50%" cy="60%" r="60%"><stop offset="0%" stop-color="#0e0808"/><stop offset="100%" stop-color="#060404"/></radialGradient></defs>
+<rect width="620" height="280" fill="url(#fg13)"/>
+<!-- Voûte romane -->
+<path d="M0,0 Q310,-20 620,0 L620,100 Q310,80 0,100 Z" fill="#120a08" stroke="#2a1808" stroke-width="1"/>
+<!-- Carrelage -->
+${Array.from({length:5},(_,r)=>Array.from({length:7},(_,c)=>`<rect x="${c*90+(r%2)*45}" y="${200+r*16}" width="86" height="14" fill="#100808" stroke="#1e1008" stroke-width="0.5" opacity="0.6"/>`).join('')).join('')}
+<!-- Autel -->
+<rect x="100" y="155" width="420" height="25" rx="3" fill="#1a1208" stroke="#6a5020" stroke-width="2"/>
+<rect x="130" y="180" width="360" height="60" rx="2" fill="#140e08" stroke="#3a2818" stroke-width="1"/>
+<!-- Bougies sur l'autel -->
+${[120,205,290,375,460].map(x=>`
+<rect x="${x}" y="130" width="10" height="28" fill="#e8e0b0" opacity="0.7" rx="1"/>
+<ellipse cx="${x+5}" cy="129" rx="4" ry="6" fill="rgba(255,200,60,0.5)"/>
+<ellipse cx="${x+5}" cy="220" rx="18" ry="8" fill="rgba(255,180,40,0.06)"/>
+`).join('')}
+<!-- 5 crânes sur l'autel — sans numéros -->
+${[140,210,280,350,420].map((x,i)=>`
+<ellipse cx="${x}" cy="143" rx="22" ry="20" fill="#1a1410" stroke="#5a4020" stroke-width="1.5"/>
+<ellipse cx="${x}" cy="152" rx="14" ry="9" fill="#140e08" stroke="#3a2818" stroke-width="1"/>
+<ellipse cx="${x-7}" cy="139" rx="5" ry="6" fill="#060404"/>
+<ellipse cx="${x+7}" cy="139" rx="5" ry="6" fill="#060404"/>
+<path d="M${x-4},148 L${x},144 L${x+4},148" fill="none" stroke="#2a1808" stroke-width="0.8"/>
+`).join('')}
+<text x="310" y="272" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="13" fill="#c8a96e" opacity="0.6">Chaque crâne garde la mémoire du suivant</text>
+</svg>`,
+
+// 14 — Manoir : bibliothèque secrète, parchemin sous lumière
+`<svg viewBox="0 0 620 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:280px;display:block">
+<defs><radialGradient id="fg14" cx="50%" cy="40%" r="50%"><stop offset="0%" stop-color="#1a1408"/><stop offset="100%" stop-color="#08070a"/></radialGradient></defs>
+<rect width="620" height="280" fill="url(#fg14)"/>
+<!-- Boiseries -->
+${Array.from({length:5},(_,i)=>`<line x1="${i*124}" y1="0" x2="${i*124}" y2="280" stroke="#1e1608" stroke-width="8" opacity="0.6"/>`).join('')}
+${Array.from({length:4},(_,i)=>`<line x1="0" y1="${i*70}" x2="620" y2="${i*70}" stroke="#1e1608" stroke-width="4" opacity="0.4"/>`).join('')}
+<!-- Bibliothèque de fond -->
+${Array.from({length:3},(_,col)=>Array.from({length:3},(_,row)=>{
+const bx=30+col*200, by=10+row*60;
+const cols=['#6b1a1a','#1a3a6b','#2a6a2a','#6b4a1a','#3a1a6b','#5a2a10'];
+return Array.from({length:6},(_,b)=>`<rect x="${bx+b*28}" y="${by+(row%2)*5}" width="22" height="${40+b*3}" rx="1" fill="${cols[(col*3+row+b)%6]}" stroke="rgba(0,0,0,0.5)" stroke-width="0.5" opacity="0.7"/>`).join('');
+}).join('')).join('')}
+<!-- Lampe de bureau -->
+<rect x="280" y="150" width="12" height="80" fill="#1a1208" stroke="#6a5020" stroke-width="1"/>
+<path d="M250,150 Q310,130 370,150 L360,170 Q310,155 260,170 Z" fill="#2a1808" stroke="#8b6020" stroke-width="1.5"/>
+<ellipse cx="310" cy="195" rx="150" ry="50" fill="rgba(220,180,60,0.06)"/>
+<!-- Parchemin ouvert sur le bureau -->
+<rect x="190" y="180" width="240" height="70" rx="6" fill="#d4c8a0" opacity="0.12" stroke="#8b7040" stroke-width="1.5"/>
+<rect x="196" y="185" width="228" height="60" rx="4" fill="#c8bc94" opacity="0.08"/>
+<!-- Lignes de texte illisibles -->
+${Array.from({length:5},(_,i)=>`<line x1="${208}" y1="${195+i*10}" x2="${408-i*8}" y2="${195+i*10}" stroke="rgba(180,150,80,0.3)" stroke-width="1.2"/>`).join('')}
+<!-- Clé mystérieuse posée sur le parchemin -->
+<path d="M380,215 Q395,208 402,215 Q395,222 380,215 Z M402,215 L428,215 M420,210 L420,215 M428,210 L428,218" fill="none" stroke="rgba(184,150,62,0.6)" stroke-width="2" stroke-linecap="round"/>
+<text x="310" y="270" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="13" fill="#c8a96e" opacity="0.6">Le mot de passe sommeille entre les initiales</text>
+</svg>`,
+
+// 15 — Lac des miroirs : eau noire, reflets brisés, brume
+`<svg viewBox="0 0 620 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:280px;display:block">
+<defs><linearGradient id="fg15" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#060810"/><stop offset="100%" stop-color="#040610"/></linearGradient></defs>
+<rect width="620" height="280" fill="url(#fg15)"/>
+<!-- Ciel nocturne -->
+${Array.from({length:40},(_,i)=>`<circle cx="${Math.random()*620}" cy="${Math.random()*120}" r="${Math.random()*1.5+0.3}" fill="white" opacity="${Math.random()*0.6+0.2}"/>`).join('')}
+<!-- Lune -->
+<circle cx="310" cy="50" r="35" fill="rgba(230,220,200,0.12)"/>
+<circle cx="310" cy="50" r="28" fill="rgba(240,230,210,0.1)"/>
+<!-- Brume sur l'eau -->
+<ellipse cx="310" cy="160" rx="350" ry="30" fill="rgba(200,200,220,0.07)"/>
+<ellipse cx="180" cy="170" rx="200" ry="20" fill="rgba(200,200,220,0.05)"/>
+<ellipse cx="450" cy="165" rx="180" ry="18" fill="rgba(200,200,220,0.04)"/>
+<!-- Surface du lac -->
+<rect x="0" y="150" width="620" height="130" fill="#040610" opacity="0.9"/>
+<!-- Reflets fracturés (lignes ondulées sur l'eau) -->
+${Array.from({length:12},(_,i)=>`<path d="M${i*55},${155+i%3*8} Q${i*55+28},${152+i%3*6} ${i*55+55},${155+i%3*8}" fill="none" stroke="rgba(200,190,150,${0.04+i*0.01})" stroke-width="1"/>`).join('')}
+<!-- Reflet de la lune brisé -->
+<ellipse cx="310" cy="200" rx="30" ry="10" fill="rgba(230,220,180,0.08)"/>
+${Array.from({length:5},(_,i)=>`<ellipse cx="${290+i*10}" cy="${200+i*4}" rx="${5-i}" ry="2" fill="rgba(230,220,180,0.06)"/>`).join('')}
+<!-- Rives pierreuses -->
+<path d="M0,150 Q100,140 200,150 Q310,160 400,148 Q500,138 620,150" fill="#0a0c14" stroke="#141828" stroke-width="2"/>
+<!-- 4 miroirs dressés sur la rive -->
+${[60,180,380,500].map((x,i)=>`
+<rect x="${x}" y="60" width="60" height="90" rx="3" fill="#08080e" stroke="${i===2?'rgba(120,200,180,0.4)':'rgba(80,80,120,0.3)'}" stroke-width="${i===2?2:1.5}"/>
+<rect x="${x+5}" y="65" width="50" height="80" rx="1" fill="rgba(100,100,150,0.06)"/>
+`).join('')}
+<text x="310" y="270" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="13" fill="rgba(150,170,220,0.5)">Un seul miroir reflète la vérité — les autres mentent</text>
+</svg>`,
+
+// 16 — Donjon : cellule, grilles, torche, inscriptions sur le mur
+`<svg viewBox="0 0 620 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:280px;display:block">
+<defs><radialGradient id="fg16" cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="#140a04"/><stop offset="100%" stop-color="#080502"/></radialGradient></defs>
+<rect width="620" height="280" fill="url(#fg16)"/>
+<!-- Pierres du mur -->
+${Array.from({length:5},(_,r)=>Array.from({length:8},(_,c)=>`<rect x="${c*78+(r%2)*40}" y="${r*55}" width="74" height="50" fill="rgba(20,12,6,0.8)" stroke="#2a1808" stroke-width="1"/>`).join('')).join('')}
+<!-- Barreaux de la grille -->
+${Array.from({length:7},(_,i)=>`<rect x="${200+i*34}" y="0" width="8" height="150" fill="#1a1208" stroke="#2a1a0a" stroke-width="1"/>`).join('')}
+<rect x="200" y="0" width="238" height="10" fill="#1a1208" stroke="#2a1a0a" stroke-width="1"/>
+<rect x="200" y="72" width="238" height="10" fill="#1a1208" stroke="#2a1a0a" stroke-width="1"/>
+<rect x="200" y="144" width="238" height="8" fill="#1a1208" stroke="#2a1a0a" stroke-width="1"/>
+<!-- Torche sur le mur -->
+<rect x="55" y="90" width="10" height="35" fill="#2a1808" stroke="#6a4020" stroke-width="1.5" transform="rotate(10,60,107)"/>
+<ellipse cx="62" cy="88" rx="7" ry="10" fill="rgba(255,140,30,0.5)"/>
+<ellipse cx="62" cy="83" rx="5" ry="7" fill="rgba(255,180,60,0.4)"/>
+<ellipse cx="155" cy="200" rx="70" ry="30" fill="rgba(255,120,20,0.06)"/>
+<!-- Inscriptions sur le mur — illisibles sauf quelques lettres -->
+<text x="60" y="180" font-family="Georgia,serif" font-size="14" fill="rgba(200,160,80,0.25)" font-style="italic">L I O N</text>
+<text x="58" y="200" font-family="Georgia,serif" font-size="11" fill="rgba(200,160,80,0.18)">= ? ? ? ?</text>
+<!-- Vieilles chaînes -->
+<path d="M480,0 Q490,30 485,60 Q490,90 480,120" fill="none" stroke="#2a2010" stroke-width="4" stroke-dasharray="8,4"/>
+<path d="M540,0 Q530,25 535,55 Q528,80 535,110" fill="none" stroke="#2a2010" stroke-width="4" stroke-dasharray="8,4"/>
+<text x="310" y="270" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="13" fill="#c8a96e" opacity="0.6">Chaque lettre a sa valeur — trouvez le code pour sortir</text>
+</svg>`,
+
+// 17 — Temple en ruine : jungle, lierre, dieu de pierre
+`<svg viewBox="0 0 620 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:280px;display:block">
+<defs><radialGradient id="fg17" cx="50%" cy="30%" r="70%"><stop offset="0%" stop-color="#0a1a08"/><stop offset="100%" stop-color="#050c04"/></radialGradient></defs>
+<rect width="620" height="280" fill="url(#fg17)"/>
+<!-- Ciel filtré par les arbres -->
+${Array.from({length:30},(_,i)=>`<circle cx="${Math.random()*620}" cy="${Math.random()*80}" r="${Math.random()*2}" fill="rgba(180,220,160,0.15)"/>`).join('')}
+<!-- Colonnes du temple -->
+${[80,190,300,410,520].map(x=>`
+<rect x="${x-18}" y="30" width="36" height="200" fill="#1a1a10" stroke="#2a2a18" stroke-width="1.5"/>
+<rect x="${x-22}" y="22" width="44" height="16" rx="2" fill="#1e1e14" stroke="#2a2a18" stroke-width="1"/>
+<rect x="${x-22}" y="222" width="44" height="14" rx="1" fill="#1e1e14" stroke="#2a2a18" stroke-width="1"/>
+`).join('')}
+<!-- Fronton brisé -->
+<polygon points="62,30 310,0 558,30" fill="#1a1a10" stroke="#2a2a18" stroke-width="2"/>
+<!-- Lierre grimpant -->
+${Array.from({length:8},(_,i)=>`<path d="M${i*80},280 Q${i*80+20},${220-i*15} ${i*80+10},${180-i*20} Q${i*80+30},${150-i*10} ${i*80+20},${120-i*15}" fill="none" stroke="#1a4a18" stroke-width="${2+i%3}"/>`).join('')}
+<!-- Statue / idole centrale -->
+<rect x="270" y="60" width="80" height="160" rx="6" fill="#161610" stroke="#2a2a20" stroke-width="2"/>
+<ellipse cx="310" cy="90" rx="30" ry="32" fill="#161610" stroke="#2a2a20" stroke-width="1.5"/>
+<!-- Visage stylisé de la statue -->
+<ellipse cx="302" cy="84" rx="4" ry="5" fill="#0a0a08"/>
+<ellipse cx="318" cy="84" rx="4" ry="5" fill="#0a0a08"/>
+<path d="M303,96 Q310,101 317,96" fill="none" stroke="#2a2a18" stroke-width="1.5"/>
+<!-- Mousse et herbe à la base -->
+${Array.from({length:10},(_,i)=>`<path d="M${50+i*54},280 Q${55+i*54},260 ${62+i*54},280" fill="#142014" stroke="#1a2a18" stroke-width="1.5"/>`).join('')}
+<text x="310" y="272" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="13" fill="rgba(160,200,140,0.5)">L'énigme du dieu ancien : plus on m'enlève, plus je grandis</text>
+</svg>`,
+
+// 18 — Catacombes : tunnel osseux, lampe à huile, inscriptions
+`<svg viewBox="0 0 620 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:280px;display:block">
+<defs><radialGradient id="fg18" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#100808"/><stop offset="100%" stop-color="#060404"/></radialGradient></defs>
+<rect width="620" height="280" fill="url(#fg18)"/>
+<!-- Tunnel en perspective -->
+<path d="M0,0 L200,80 L200,200 L0,280 Z" fill="#0a0606"/>
+<path d="M620,0 L420,80 L420,200 L620,280 Z" fill="#0a0606"/>
+<ellipse cx="310" cy="140" rx="110" ry="60" fill="#060404"/>
+<ellipse cx="310" cy="140" rx="100" ry="52" fill="#040202"/>
+<!-- Os dans les niches murales -->
+${[30,130,460,560].map(x=>`
+<rect x="${x}" y="80" width="60" height="80" rx="3" fill="#0d0806" stroke="#2a1808" stroke-width="1"/>
+<!-- Crâne dans la niche -->
+<ellipse cx="${x+30}" cy="110" rx="16" ry="14" fill="#1a1208" stroke="#3a2818" stroke-width="1"/>
+<ellipse cx="${x+22}" cy="108" rx="4" ry="5" fill="#080604"/>
+<ellipse cx="${x+38}" cy="108" rx="4" ry="5" fill="#080604"/>
+<!-- Os croisés -->
+<line x1="${x+15}" y1="145" x2="${x+45}" y2="155" stroke="#1a1208" stroke-width="3"/>
+<line x1="${x+45}" y1="145" x2="${x+15}" y2="155" stroke="#1a1208" stroke-width="3"/>
+`).join('')}
+<!-- Sol de la catacombe -->
+<rect x="0" y="220" width="620" height="60" fill="#080604"/>
+${Array.from({length:4},(_,i)=>`<line x1="${i*150}" y1="220" x2="${310}" y2="140" stroke="#120a08" stroke-width="1" opacity="0.4"/>`).join('')}
+<!-- Lampe à huile -->
+<ellipse cx="310" cy="175" rx="20" ry="8" fill="#1a1208" stroke="#6a5020" stroke-width="1.5"/>
+<rect x="302" y="167" width="16" height="10" rx="2" fill="#1a1208" stroke="#6a5020" stroke-width="1"/>
+<ellipse cx="310" cy="166" rx="5" ry="7" fill="rgba(255,160,40,0.5)"/>
+<ellipse cx="310" cy="140" rx="80" ry="50" fill="rgba(255,140,30,0.04)"/>
+<!-- Message codé sur le mur (partiellement visible) -->
+<text x="220" y="70" font-family="Georgia,serif" font-size="13" fill="rgba(200,160,80,0.3)" font-style="italic">19 · 5 · 3 · 18 · 5 · 20</text>
+<text x="310" y="270" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="13" fill="#c8a96e" opacity="0.6">Un message gravé dans l'os attend d'être déchiffré</text>
+</svg>`,
+
+// 19 — Chambre du juge : tribunal médiéval, balance, trois accusés
+`<svg viewBox="0 0 620 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:280px;display:block">
+<defs><linearGradient id="fg19" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#120e04"/><stop offset="100%" stop-color="#080600"/></linearGradient></defs>
+<rect width="620" height="280" fill="url(#fg19)"/>
+<!-- Architecture du tribunal -->
+<rect x="0" y="0" width="620" height="60" fill="#1a1608" stroke="#2a2010" stroke-width="1"/>
+<!-- Piliers -->
+${[60,200,420,560].map(x=>`<rect x="${x}" y="0" width="24" height="260" fill="#161208" stroke="#2a2010" stroke-width="1"/>`).join('')}
+<!-- Estrade du juge -->
+<rect x="210" y="110" width="200" height="100" fill="#1a1408" stroke="#6a5020" stroke-width="2"/>
+<rect x="210" y="104" width="200" height="14" rx="2" fill="#2a2010" stroke="#6a5020" stroke-width="1.5"/>
+<!-- Silhouette du juge (dos, robe, perruque) -->
+<ellipse cx="310" cy="125" rx="20" ry="18" fill="#0a0c08" stroke="#2a2818" stroke-width="1"/>
+<rect x="292" y="140" width="36" height="55" rx="4" fill="#0a0c08" stroke="#2a2818" stroke-width="1"/>
+<!-- Perruque -->
+<path d="M290,118 Q310,106 330,118 Q335,130 310,132 Q285,130 290,118 Z" fill="#1a1a14" stroke="#2a2a1e" stroke-width="1"/>
+<!-- Balance de la justice -->
+<line x1="310" y1="0" x2="310" y2="50" stroke="#6a5820" stroke-width="2"/>
+<line x1="260" y1="50" x2="360" y2="50" stroke="#6a5820" stroke-width="3"/>
+<line x1="260" y1="50" x2="255" y2="80" stroke="#6a5820" stroke-width="1.5"/>
+<line x1="360" y1="50" x2="365" y2="80" stroke="#6a5820" stroke-width="1.5"/>
+<ellipse cx="255" cy="83" rx="15" ry="8" fill="#1a1408" stroke="#6a5020" stroke-width="1"/>
+<ellipse cx="365" cy="83" rx="15" ry="8" fill="#1a1408" stroke="#6a5020" stroke-width="1"/>
+<!-- 3 accusés dans le box -->
+${[{x:70,label:'Alex'},{x:260,label:'Blake'},{x:450,label:'Casey'}].map(a=>`
+<rect x="${a.x-20}" y="195" width="80" height="65" rx="3" fill="#120e08" stroke="#3a2818" stroke-width="1.5"/>
+<ellipse cx="${a.x+20}" cy="215" rx="14" ry="16" fill="rgba(200,160,100,0.1)"/>
+<rect x="${a.x+6}" y="229" width="28" height="25" rx="3" fill="rgba(200,160,100,0.08)"/>
+<text x="${a.x+20}" y="272" text-anchor="middle" font-family="Georgia,serif" font-size="11" fill="#c8a96e" opacity="0.7">${a.label}</text>
+`).join('')}
+<text x="310" y="270" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="13" fill="#c8a96e" opacity="0.6">Trois suspects, trois déclarations, un seul menteur</text>
+</svg>`,
+
+// 20 — Salle du maître : grande porte scellée, symboles, lumière dorée
+`<svg viewBox="0 0 620 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:280px;display:block">
+<defs><radialGradient id="fg20" cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="#1a0d1a"/><stop offset="100%" stop-color="#080508"/></radialGradient></defs>
+<rect width="620" height="280" fill="url(#fg20)"/>
+<!-- Rayons lumineux qui filtrent sous la porte -->
+${Array.from({length:8},(_,i)=>`<polygon points="${230+i*20},280 ${240+i*20},280 ${310+i*10},200 ${300+i*10},200" fill="rgba(220,180,60,0.04)"/>`).join('')}
+<!-- Mur de pierre imposant -->
+${Array.from({length:5},(_,r)=>Array.from({length:8},(_,c)=>`<rect x="${c*78+(r%2)*40}" y="${r*56}" width="74" height="52" fill="#120a10" stroke="#2a1828" stroke-width="1.5"/>`).join('')).join('')}
+<!-- Grande porte double -->
+<rect x="160" y="30" width="300" height="240" rx="4" fill="#0d0810" stroke="#b8963e" stroke-width="3"/>
+<!-- Ligne centrale porte -->
+<line x1="310" y1="30" x2="310" y2="270" stroke="#b8963e" stroke-width="2"/>
+<!-- Ornements gothiques sur la porte -->
+${[{x:220,y:100},{x:400,y:100},{x:220,y:170},{x:400,y:170}].map(p=>`<circle cx="${p.x}" cy="${p.y}" r="12" fill="none" stroke="#b8963e" stroke-width="1.5" opacity="0.5"/><circle cx="${p.x}" cy="${p.y}" r="5" fill="rgba(184,150,62,0.15)"/>`).join('')}
+<!-- Sceau / symbole central mystérieux -->
+<circle cx="310" cy="145" r="40" fill="none" stroke="#b8963e" stroke-width="2"/>
+<circle cx="310" cy="145" r="28" fill="none" stroke="#b8963e" stroke-width="1" opacity="0.5"/>
+<!-- Symbole alchimique -->
+<polygon points="310,115 336,158 284,158" fill="none" stroke="#b8963e" stroke-width="1.5"/>
+<polygon points="310,175 336,132 284,132" fill="none" stroke="#b8963e" stroke-width="1.5"/>
+<circle cx="310" cy="145" r="6" fill="#b8963e" opacity="0.5"/>
+<!-- Lueur sous la porte -->
+<rect x="160" y="268" width="300" height="4" fill="rgba(220,180,60,0.3)"/>
+<ellipse cx="310" cy="275" rx="160" ry="12" fill="rgba(220,180,60,0.08)"/>
+<!-- Torches latérales -->
+${[130,490].map(x=>`
+<rect x="${x-5}" y="100" width="10" height="30" fill="#2a1808" stroke="#6a4020" stroke-width="1"/>
+<ellipse cx="${x}" cy="98" rx="6" ry="9" fill="rgba(255,160,40,0.5)"/>
+<ellipse cx="${x}" cy="220" rx="40" ry="16" fill="rgba(255,140,30,0.05)"/>
+`).join('')}
+<text x="310" y="272" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="13" fill="#c8a96e" opacity="0.7">Vingt salles traversées — une seule porte reste scellée</text>
+</svg>`
+
+];
+
+function getEnigmeSVG(idx) {
+  return ENIGME_SVG[idx % ENIGME_SVG.length] || ENIGME_SVG[0];
+}
+const ROOMS = [
+// ═══════════════════════════════════════════════════════
+// ACTE I — LE MANOIR MAUDIT (salles 1-20) — Difficulté croissante ★ à ★★
+// ═══════════════════════════════════════════════════════
+{id:1,act:1,name:"Le Vestibule des Ombres",theme:"medieval",badge:"badge-medieval",enigme:{type:"choix",label:"Observation",titre:"Le Miroir Trompeur",soustitre:"Quelque chose cloche dans ce reflet…",texte:"Le miroir devant vous montre votre reflet. Vous portez une montre au poignet droit. Mais dans le reflet, à quel poignet la voyez-vous ?",options:["Droit","Gauche","Les deux","Aucun"],reponse:1,hint:"Un miroir inverse toujours gauche et droite."}},
+{id:2,act:1,name:"La Bibliothèque Secrète",theme:"medieval",badge:"badge-medieval",enigme:{type:"input",label:"Déchiffrement",titre:"Le Tome Interdit",soustitre:"Les symboles cachent un nombre…",texte:"Sur la tranche d'un livre retourné, vous lisez : VIII. Quel est ce nombre en chiffres arabes ?",reponse:"8",hint:"V=5, I=1. Comptez les symboles."}},
+{id:3,act:1,name:"La Salle du Banquet",theme:"medieval",badge:"badge-medieval",enigme:{type:"choix",label:"Logique",titre:"Les Chandelles",soustitre:"Comptez ce qui reste allumé…",texte:"Sur la table, 12 chandelles sont allumées. Le vent en éteint 5. Combien de chandelles restent-il au total sur la table ?",options:["7","12","5","0"],reponse:1,hint:"Le vent éteint, il ne fait pas disparaître les chandelles."}},
+{id:4,act:1,name:"La Tour de l'Horloger",theme:"medieval",badge:"badge-medieval",enigme:{type:"input",label:"Lecture",titre:"L'Heure Arrêtée",soustitre:"L'horloge s'est bloquée cette nuit-là…",texte:"L'aiguille des heures pointe vers le 3. L'aiguille des minutes pointe vers le 6. Quelle heure est-il ? (format HH:MM)",reponse:"03:30",hint:"Minutes sur le 6 = 30 minutes."}},
+{id:5,act:1,name:"Le Caveau des Ancêtres",theme:"horreur",badge:"badge-horreur",enigme:{type:"choix",label:"Suite logique",titre:"Les Pierres Tombales",soustitre:"Les dates sur les pierres suivent un ordre…",texte:"Quatre pierres tombales : 1840, 1860, 1880, 1900. Quelle date serait gravée sur la suivante ?",options:["1910","1920","1940","1930"],reponse:1,hint:"Cherchez l'écart régulier entre les dates."}},
+{id:6,act:1,name:"Le Grenier des Spectres",theme:"horreur",badge:"badge-horreur",enigme:{type:"input",label:"Code",titre:"Le Message Fantôme",soustitre:"A=1, B=2, C=3… déchiffrez.",texte:"Gravés sur le mur : 8 · 1 · 14 · 20 · 5. Quel mot ces chiffres forment-ils ? (Majuscules)",reponse:"HANTE",hint:"Chaque chiffre = position dans l'alphabet."}},
+{id:7,act:1,name:"La Chapelle Interdite",theme:"medieval",badge:"badge-medieval",enigme:{type:"choix",label:"Arithmétique",titre:"Les Vitraux",soustitre:"Les couleurs sont une formule…",texte:"3 vitraux rouges valent 9 pièces. 1 vitrail bleu vaut 8 pièces. Vous avez 35 pièces. Après 1 vitrail bleu, combien de vitraux rouges pouvez-vous acheter ?",options:["8","9","7","6"],reponse:2,hint:"35 − 8 = 27. Puis 27 ÷ 3 = ?"}},
+{id:8,act:1,name:"Le Laboratoire de l'Alchimiste",theme:"aventure",badge:"badge-aventure",enigme:{type:"input",label:"Séquence",titre:"Les Fioles",soustitre:"La séquence des couleurs cache un nombre…",texte:"Suite de fioles : 1, 2, 4, 8, 16, ___. Quel nombre complète la suite ?",reponse:"32",hint:"Chaque terme est le double du précédent."}},
+{id:9,act:1,name:"L'Observatoire Nocturne",theme:"aventure",badge:"badge-aventure",enigme:{type:"choix",label:"Constellation",titre:"L'Étoile du Nord",soustitre:"Les astres forment un chiffre…",texte:"5 étoiles reliées par des lignes forment la silhouette d'un chiffre. Deux barres horizontales, une barre verticale à gauche, une diagonale au milieu. Quel chiffre ?",options:["4","5","6","7"],reponse:1,hint:"Fermé en haut, ouvert en bas avec une courbe…"}},
+{id:10,act:1,name:"Le Cachot du Prisonnier",theme:"horreur",badge:"badge-horreur",enigme:{type:"input",label:"Déduction",titre:"Les Marques sur le Mur",soustitre:"Le prisonnier comptait les jours…",texte:"Le prisonnier a gravé des barres : IIII IIII IIII IIII III. Combien de jours a-t-il passé dans ce cachot ?",reponse:"23",hint:"Comptez les barres par groupes de 5 (4 droites + 1 diagonale)."}},
+{id:11,act:1,name:"La Salle des Armures",theme:"medieval",badge:"badge-medieval",enigme:{type:"choix",label:"Logique",titre:"Les Chevaliers",soustitre:"Seul un chevalier dit la vérité…",texte:"Trois chevaliers. Arthur : 'Je suis innocent.' Bors : 'C'est Arthur.' Gauvain : 'Ce n'est pas Arthur.' Un seul ment. Qui a commis la trahison ?",options:["Arthur","Bors","Gauvain","Impossible à dire"],reponse:1,hint:"Si Bors ment, alors ce n'est pas Arthur. Qui reste ?"}},
+{id:12,act:1,name:"La Crypte des Crânes",theme:"horreur",badge:"badge-horreur",enigme:{type:"input",label:"Multiplication",titre:"Les Reliques",soustitre:"L'autel réclame un nombre précis…",texte:"Sur l'autel : 4 rangées de 7 crânes. Mais 6 sont brisés et ne comptent pas. Combien de crânes valides restent-il ?",reponse:"22",hint:"4 × 7 = 28. Puis soustrayez les brisés."}},
+{id:13,act:1,name:"Le Couloir des Portraits",theme:"medieval",badge:"badge-medieval",enigme:{type:"choix",label:"Observation",titre:"Le Portrait Manquant",soustitre:"Un ancêtre a été effacé…",texte:"5 portraits d'ancêtres : années 1820, 1845, 1870, 1895, ___. Quelle année manque ?",options:["1910","1915","1920","1925"],reponse:2,hint:"Cherchez l'intervalle régulier entre les dates."}},
+{id:14,act:1,name:"La Cave aux Vins",theme:"medieval",badge:"badge-medieval",enigme:{type:"input",label:"Calcul",titre:"Les Tonneaux",soustitre:"L'inventaire du cellier est incomplet…",texte:"Le cellier contient 3 rangées de 8 tonneaux. Un feu en a détruit 7. Combien en reste-t-il ?",reponse:"17",hint:"3 × 8 = 24. Soustrayez les perdus."}},
+{id:15,act:1,name:"La Salle des Miroirs",theme:"medieval",badge:"badge-medieval",enigme:{type:"choix",label:"Réflexion",titre:"L'Infini des Reflets",soustitre:"Le vrai est caché parmi les copies…",texte:"Quatre miroirs vous reflètent. L'un montre votre reflet avec la cicatrice sur la joue gauche. Dans la réalité, la cicatrice est à droite. Quel miroir est fidèle ?",options:["Celui qui montre gauche","Celui qui montre droite","Les deux","Aucun des deux"],reponse:1,hint:"Un miroir inverse la droite et la gauche."}},
+{id:16,act:1,name:"Le Donjon du Seigneur",theme:"horreur",badge:"badge-horreur",enigme:{type:"input",label:"Cryptographie",titre:"Le Code de la Cellule",soustitre:"Additionnez les lettres pour trouver le code…",texte:"CODE (C=3, O=15, D=4, E=5). Additionnez les valeurs. Quel est le code numérique ?",reponse:"27",hint:"3 + 15 + 4 + 5 = ?"}},
+{id:17,act:1,name:"Le Temple Souterrain",theme:"aventure",badge:"badge-aventure",enigme:{type:"choix",label:"Énigme classique",titre:"La Parole Ancienne",soustitre:"Je grandis quand on m'enlève…",texte:"« Plus on m'enlève, plus je suis grand. Creusez-moi et je grandirai encore. Qu'est-ce que je suis ? »",options:["L'ombre","Un trou","La dette","Le silence"],reponse:1,hint:"Pensez physiquement, pas abstraitement."}},
+{id:18,act:1,name:"La Salle du Trône",theme:"medieval",badge:"badge-medieval",enigme:{type:"input",label:"Acrostiche",titre:"Le Message Royal",soustitre:"La première lettre de chaque mot révèle un secret…",texte:"Prenez la première lettre de : Roi, Ordre, Ivoire, Nuit. Lisez-les dans l'ordre.",reponse:"ROIN",hint:"1ère lettre de chaque mot, dans l'ordre donné."}},
+{id:19,act:1,name:"La Chambre de Torture",theme:"horreur",badge:"badge-horreur",enigme:{type:"choix",label:"Logique",titre:"Le Choix du Bourreau",soustitre:"Un seul chemin mène à la sortie…",texte:"Trois portes. Porte A : tigre affamé. Porte B : assassin armé. Porte C : fosse de 50 ans remplie de lave refroidie. Laquelle est sûre ?",options:["Porte A","Porte B","Porte C","Aucune"],reponse:2,hint:"La lave refroidie depuis 50 ans est devenue de la roche."}},
+{id:20,act:1,name:"La Porte des Ténèbres",theme:"horreur",badge:"badge-horreur",enigme:{type:"input",label:"Défi final",titre:"Le Sceau du Manoir",soustitre:"Le mot de passe vous libère du premier acte…",texte:"Les 5 premières lettres gravées sur les murs du manoir en ordre : M-A-N-O-I-R. Prenez les 5 premières.",reponse:"MANOI",hint:"Les 5 premières lettres dans l'ordre exact."}},
+
+// ═══════════════════════════════════════════════════════
+// ACTE II — LA CITÉ PERDUE (salles 21-40) — Difficulté ★★ à ★★★
+// ═══════════════════════════════════════════════════════
+{id:21,act:2,name:"Le Port des Naufrageurs",theme:"aventure",badge:"badge-aventure",enigme:{type:"choix",label:"Navigation",titre:"La Rose des Vents",soustitre:"Déchiffrez la boussole du capitaine…",texte:"Le capitaine note : 'N puis E puis S puis O puis N.' Après ces 5 directions, où se trouve-t-il par rapport à son point de départ ?",options:["Au Nord","À l'Est","Au point de départ","Au Sud"],reponse:2,hint:"N+S s'annulent. E+O s'annulent. Tracez le chemin."}},
+{id:22,act:2,name:"La Cale du Vaisseau Fantôme",theme:"aventure",badge:"badge-aventure",enigme:{type:"input",label:"Calcul marin",titre:"Le Journal du Capitaine",soustitre:"Les marins disparaissent chaque nuit…",texte:"Jour 1 : 80 marins. Chaque nuit exactement la moitié disparaît (arrondi supérieur si impair). Après 3 nuits, combien reste-t-il ?",reponse:"10",hint:"80 → 40 → 20 → 10. La moitié exacte chaque nuit."}},
+{id:23,act:2,name:"Les Ruines du Temple Maya",theme:"aventure",badge:"badge-aventure",enigme:{type:"choix",label:"Séquence",titre:"Les Glyphes Sacrés",soustitre:"La séquence des glyphes commande la porte…",texte:"Suite : 1, 1, 2, 3, 5, 8, 13, ___. Quel est le prochain nombre de cette suite célèbre ?",options:["18","20","21","34"],reponse:2,hint:"Chaque nombre est la somme des deux précédents."}},
+{id:24,act:2,name:"La Salle du Trésor Inca",theme:"aventure",badge:"badge-aventure",enigme:{type:"input",label:"Or et calcul",titre:"Le Compte du Trésor",soustitre:"Comptez l'or avant que les gardes reviennent…",texte:"Le coffre contient 3 sacs de 40 pièces, 2 sacs de 25 pièces et 15 pièces en vrac. Combien de pièces au total ?",reponse:"185",hint:"3×40 + 2×25 + 15 = ?"}},
+{id:25,act:2,name:"Le Labyrinthe de Cnossos",theme:"aventure",badge:"badge-aventure",enigme:{type:"choix",label:"Logique spatiale",titre:"Le Fil d'Ariane",soustitre:"Trouvez la sortie du labyrinthe…",texte:"Vous entrez par le Nord. Vous tournez à droite (Est), puis à gauche (Nord), puis à droite (Est) encore. Dans quelle direction faites-vous face ?",options:["Nord","Sud","Est","Ouest"],reponse:2,hint:"Suivez chaque tournant pas à pas."}},
+{id:26,act:2,name:"Les Thermes Romains",theme:"aventure",badge:"badge-aventure",enigme:{type:"input",label:"Latin",titre:"L'Inscription Romaine",soustitre:"Déchiffrez le nombre gravé dans le marbre…",texte:"Sur le fronton : MCMXCIX. Convertissez en chiffres arabes.",reponse:"1999",hint:"M=1000, CM=900, XC=90, IX=9."}},
+{id:27,act:2,name:"Le Bazar de Bagdad",theme:"aventure",badge:"badge-aventure",enigme:{type:"choix",label:"Marchandage",titre:"L'Énigme du Marchand",soustitre:"Le marchand parle en devinettes…",texte:"« J'ai des chameaux et des dromadaires. Mes bêtes ont 48 pattes. Les chameaux ont 4 pattes, les dromadaires aussi. Mais j'ai le double de chameaux que de dromadaires. » Combien de dromadaires ?",options:["4","6","8","12"],reponse:0,hint:"Si d=dromadaires, alors 2d=chameaux. Total pattes = 4d + 4(2d) = 12d = 48."}},
+{id:28,act:2,name:"La Tombe du Pharaon",theme:"aventure",badge:"badge-aventure",enigme:{type:"input",label:"Hiéroglyphes",titre:"Le Scarabée Sacré",soustitre:"Chaque symbole a une valeur…",texte:"Soleil=10, Lune=5, Étoile=1. Le motif montre : Soleil + Soleil + Lune + Étoile + Étoile + Étoile. Quelle valeur ?",reponse:"28",hint:"10+10+5+1+1+1 = ?"}},
+{id:29,act:2,name:"Le Palais de l'Émir",theme:"aventure",badge:"badge-aventure",enigme:{type:"choix",label:"Probabilité",titre:"Les Urnes d'Aladin",soustitre:"L'émir teste votre sagesse…",texte:"3 urnes : l'une contient de l'or, les deux autres du sable. L'émir vous indique que l'urne du milieu ne contient pas d'or. Quelle est la probabilité que l'urne de gauche contienne l'or ?",options:["1/3","1/2","2/3","1/4"],reponse:1,hint:"L'information élimine une option. Il reste deux urnes équiprobables."}},
+{id:30,act:2,name:"La Grotte des Pirates",theme:"aventure",badge:"badge-aventure",enigme:{type:"input",label:"Coordonnées",titre:"La Carte au Trésor",soustitre:"Suivez les instructions exactement…",texte:"Départ case (1,1). Allez 4 cases Est → 2 cases Nord → 3 cases Ouest → 1 case Sud. Quelle est votre position finale ? (format X,Y)",reponse:"2,3",hint:"X final = 1+4−3 = 2. Y final = 1+2−1 = 2. Vérifiez chaque étape."}},
+{id:31,act:2,name:"Le Volcan Sacré",theme:"aventure",badge:"badge-aventure",enigme:{type:"choix",label:"Science",titre:"La Lave et le Temps",soustitre:"Le géologue laisse une note…",texte:"La lave se refroidit et se solidifie en roche. Une coulée vieille de 100 ans est-elle dangereuse à traverser ?",options:["Oui, elle brûle encore","Non, elle est solide","Ça dépend","Impossible à savoir"],reponse:1,hint:"100 ans de refroidissement transforment la lave en roche dure."}},
+{id:32,act:2,name:"La Jungle des Serpents",theme:"aventure",badge:"badge-aventure",enigme:{type:"input",label:"Déduction",titre:"Les Traces dans la Boue",soustitre:"Combien d'animaux sont passés ?",texte:"Dans la boue : 4 empreintes de pattes à 4 doigts, 6 empreintes à 3 doigts, 2 empreintes à 2 doigts. Chaque animal laisse 4 empreintes. Combien d'animaux distincts sont passés ?",reponse:"3",hint:"12 empreintes totales ÷ 4 par animal = ?"}},
+{id:33,act:2,name:"Le Monastère Tibétain",theme:"aventure",badge:"badge-aventure",enigme:{type:"choix",label:"Zen",titre:"Le Koan du Moine",soustitre:"Le moine attend votre réponse depuis l'aube…",texte:"« Si un arbre tombe en forêt et qu'il n'y a personne pour l'entendre, produit-il un son ? » — Le moine attend la réponse LOGIQUE et non philosophique.",options:["Oui","Non","Peut-être","La question est sans réponse"],reponse:0,hint:"Physiquement, les ondes sonores existent indépendamment d'un observateur."}},
+{id:34,act:2,name:"La Cité Engloutie",theme:"aventure",badge:"badge-aventure",enigme:{type:"input",label:"Pression",titre:"Les Profondeurs",soustitre:"La pression augmente avec la profondeur…",texte:"À la surface : pression = 1 bar. La pression double tous les 10m. À 30m de profondeur, quelle est la pression ? (en bars)",reponse:"8",hint:"Surface=1, 10m=2, 20m=4, 30m=8."}},
+{id:35,act:2,name:"Le Phare des Naufrageurs",theme:"aventure",badge:"badge-aventure",enigme:{type:"choix",label:"Signaux",titre:"Le Code Morse Simplifié",soustitre:"Les flashs du phare transmettent un message…",texte:"Le phare clignote : court-long-court / long / court-long-court. En morse, point=lettre, tiret=voyelle. Ce n'est pas du vrai morse mais un code local. Combien de mots ce signal contient-il ?",options:["1","2","3","4"],reponse:2,hint:"Cherchez les séparateurs entre les groupes de signaux."}},
+{id:36,act:2,name:"La Mine de Diamants",theme:"aventure",badge:"badge-aventure",enigme:{type:"input",label:"Tri logique",titre:"Les Pierres Précieuses",soustitre:"L'expert examine la collection…",texte:"Un sac contient 5 rubis, 3 émeraudes, 8 saphirs et 2 diamants. Combien de pierres devez-vous en tirer au minimum pour être sûr d'avoir au moins 1 diamant ?",reponse:"17",hint:"Dans le pire cas, vous tirez d'abord tous les rubis, émeraudes et saphirs."}},
+{id:37,act:2,name:"La Forteresse des Assassins",theme:"horreur",badge:"badge-horreur",enigme:{type:"choix",label:"Probabilité",titre:"Les Portes Piégées",soustitre:"Une seule porte mène à la liberté…",texte:"5 portes. Vous en choisissez une. Le gardien ouvre 3 autres portes qui sont toutes piégées. Avez-vous intérêt à changer votre choix ?",options:["Non, c'est pareil","Oui, vos chances passent de 1/5 à 1/2","Oui, vos chances passent de 1/5 à 4/5","Aucune différence"],reponse:1,hint:"Problème de Monty Hall simplifié : changer double vos chances."}},
+{id:38,act:2,name:"Le Désert des Ossements",theme:"horreur",badge:"badge-horreur",enigme:{type:"input",label:"Survie",titre:"L'Eau du Désert",soustitre:"Calculez avant de partir…",texte:"Vous avez 3 litres d'eau. Chaque heure, vous buvez 0,25 litre. Dans combien d'heures serez-vous à sec ?",reponse:"12",hint:"3 ÷ 0,25 = ?"}},
+{id:39,act:2,name:"Le Volcan des Dieux",theme:"aventure",badge:"badge-aventure",enigme:{type:"choix",label:"Mythologie",titre:"Le Sacrifice",soustitre:"Le dieu réclame le bon nombre…",texte:"Le dieu du feu accepte des sacrifices en multiples de 7. Lequel de ces nombres ne peut PAS être accepté ?",options:["49","56","63","67"],reponse:3,hint:"Divisez chaque nombre par 7. Lequel donne un reste ?"}},
+{id:40,act:2,name:"La Porte de la Cité Perdue",theme:"aventure",badge:"badge-aventure",enigme:{type:"input",label:"Défi de l'acte II",titre:"Le Sceau de la Cité",soustitre:"Traversez le seuil du second acte…",texte:"En latin, ITER signifie 'chemin'. Si chaque lettre vaut sa position (A=1, B=2…), quelle est la somme de ITER ?",reponse:"50",hint:"I=9, T=20, E=5, R=18. Additionnez."}},
+
+// ═══════════════════════════════════════════════════════
+// ACTE III — LE VAISSEAU DE L'OUBLI (salles 41-60) — Difficulté ★★★
+// ═══════════════════════════════════════════════════════
+{id:41,act:3,name:"La Salle de Contrôle",theme:"aventure",badge:"badge-aventure",enigme:{type:"choix",label:"Binaire",titre:"Les Lumières du Tableau de Bord",soustitre:"Les témoins lumineux codent un message…",texte:"En binaire : 0101 = ? (base 10)",options:["3","4","5","6"],reponse:2,hint:"0×8 + 1×4 + 0×2 + 1×1 = ?"}},
+{id:42,act:3,name:"Le Couloir des Miroirs Brisés",theme:"horreur",badge:"badge-horreur",enigme:{type:"input",label:"Réflexion",titre:"L'Écho de la Lumière",soustitre:"Calculez le trajet du rayon lumineux…",texte:"Un rayon laser rebondit sur 4 miroirs à 45°. Combien de fois change-t-il de direction au total ?",reponse:"4",hint:"Chaque miroir = 1 changement de direction."}},
+{id:43,act:3,name:"Le Laboratoire Quantique",theme:"aventure",badge:"badge-aventure",enigme:{type:"choix",label:"Logique",titre:"Le Paradoxe du Chat",soustitre:"Schrödinger vous tend un piège…",texte:"Un chat est dans une boîte fermée. Sans l'ouvrir, peut-on savoir avec certitude s'il est vivant ?",options:["Oui","Non","Ça dépend de la boîte","Il est à la fois vivant et mort"],reponse:1,hint:"Sans observation, l'état est indéterminé — c'est le principe de superposition."}},
+{id:44,act:3,name:"La Salle des Étoiles Mortes",theme:"aventure",badge:"badge-aventure",enigme:{type:"input",label:"Astronomie",titre:"La Lumière du Passé",soustitre:"Ce que vous voyez n'existe peut-être plus…",texte:"Une étoile est à 100 années-lumière. Sa lumière met 100 ans à vous parvenir. Si elle a explosé il y a 50 ans, que voyez-vous aujourd'hui ?",reponse:"étoile",hint:"Vous ne pouvez voir que ce qui a émis la lumière il y a 100 ans — l'explosion arrivera dans 50 ans à vos yeux."}},
+{id:45,act:3,name:"Le Pont de Gravitons",theme:"aventure",badge:"badge-aventure",enigme:{type:"choix",label:"Physique",titre:"Le Poids dans le Vide",soustitre:"La balance ne ment pas dans le vide…",texte:"Sur Terre, un objet pèse 60 kg. Sur la Lune, la gravité est 6 fois plus faible. Quelle est sa masse sur la Lune ?",options:["10 kg","60 kg","6 kg","0 kg"],reponse:1,hint:"La masse ne change pas. Seul le poids (force) change."}},
+{id:46,act:3,name:"L'Algorithme du Maître",theme:"aventure",badge:"badge-aventure",enigme:{type:"input",label:"Suite complexe",titre:"La Suite de l'IA",soustitre:"L'intelligence artificielle vous teste…",texte:"Suite : 2, 6, 12, 20, 30, ___. Quel est le terme suivant ?",reponse:"42",hint:"Écarts : 4, 6, 8, 10, 12… La suite des écarts augmente de 2."}},
+{id:47,act:3,name:"La Chambre de Cryogénie",theme:"horreur",badge:"badge-horreur",enigme:{type:"choix",label:"Déduction",titre:"Les Capsules",soustitre:"Une seule capsule fonctionne encore…",texte:"4 capsules. Capsule A : lumière verte. Capsule B : lumière rouge. Capsule C : aucune lumière. Capsule D : lumière orange. Le manuel dit : 'seules les lumières primaires signalent un bon fonctionnement.' Quelle capsule choisissez-vous ?",options:["A (verte)","B (rouge)","C (aucune)","D (orange)"],reponse:0,hint:"Les couleurs primaires sont rouge, vert, bleu — mais rouge signale souvent une erreur. Vert = go."}},
+{id:48,act:3,name:"Le Nexus des Dimensions",theme:"aventure",badge:"badge-aventure",enigme:{type:"input",label:"Géométrie",titre:"Le Cube Brisé",soustitre:"Comptez les faces visibles…",texte:"Un cube 3×3×3 est entièrement peint en rouge, puis découpé en 27 petits cubes. Combien de petits cubes ont exactement 2 faces peintes ?",reponse:"12",hint:"Ce sont les cubes situés sur les arêtes (pas les coins, pas les faces seules)."}},
+{id:49,act:3,name:"La Bibliothèque Infinie",theme:"aventure",badge:"badge-aventure",enigme:{type:"choix",label:"Paradoxe",titre:"L'Index Universel",soustitre:"Borges vous attend au bout du couloir…",texte:"Une bibliothèque contient tous les livres possibles de 1 million de caractères. Parmi eux, un livre intitulé 'Liste de tous les livres qui ne se contiennent pas eux-mêmes'. Ce livre contient-il sa propre liste ?",options:["Oui","Non","Les deux","Ni l'un ni l'autre — paradoxe"],reponse:3,hint:"C'est le paradoxe de Russell : si oui, il ne devrait pas. Si non, il devrait."}},
+{id:50,act:3,name:"Le Couloir du Temps",theme:"aventure",badge:"badge-aventure",enigme:{type:"input",label:"Relativité",titre:"Le Paradoxe des Jumeaux",soustitre:"Einstein vous attend au bout du couloir…",texte:"Jumeau A reste sur Terre. Jumeau B voyage à 0,9c pendant 10 ans (selon B). À son retour, lequel est plus âgé ? Répondez : A ou B",reponse:"A",hint:"La dilatation du temps : le voyageur vieillit moins vite que celui qui reste."}},
+{id:51,act:3,name:"La Salle des Miroirs Quantiques",theme:"horreur",badge:"badge-horreur",enigme:{type:"choix",label:"Logique formelle",titre:"Les Mensonges",soustitre:"Deux gardes, une vérité, un mensonge…",texte:"Deux gardes. L'un ment toujours, l'autre dit toujours la vérité. Vous posez la même question aux deux : 'L'autre garde m'indiquerait-il la porte de droite comme sortie ?' Les deux disent 'Oui.' Quelle porte choisissez-vous ?",options:["Droite","Gauche","N'importe laquelle","Impossible à déterminer"],reponse:1,hint:"Si les deux disent la même chose, c'est forcément faux — prenez l'opposé."}},
+{id:52,act:3,name:"Le Réacteur Nucléaire",theme:"horreur",badge:"badge-horreur",enigme:{type:"input",label:"Demi-vie",titre:"La Désintégration",soustitre:"Le physicien a laissé ses calculs…",texte:"Une substance radioactive a une demi-vie de 10 ans. On part de 800g. Combien reste-t-il après 30 ans ?",reponse:"100",hint:"Tous les 10 ans, la quantité est divisée par 2. 800 → 400 → 200 → 100."}},
+{id:53,act:3,name:"L'Arène des Gladiateurs Robots",theme:"aventure",badge:"badge-aventure",enigme:{type:"choix",label:"Optimisation",titre:"Le Tournoi",soustitre:"Calculez le nombre de combats…",texte:"Un tournoi à élimination directe a 64 participants. Combien de combats sont nécessaires pour déterminer un vainqueur ?",options:["63","64","32","127"],reponse:0,hint:"Chaque combat élimine exactement 1 joueur. Pour avoir 1 vainqueur parmi 64…"}},
+{id:54,act:3,name:"Le Sanctuaire de l'Oracle",theme:"aventure",badge:"badge-aventure",enigme:{type:"input",label:"Cryptage",titre:"Le Chiffre de César",soustitre:"César décalait chaque lettre de 3 positions…",texte:"Déchiffrez ce message (décalage de 3 en arrière) : DUFDQD. Quelle est la lettre qui correspond à D avec un décalage de 3 vers l'arrière ? Déchiffrez tout le mot.",reponse:"ARCANA",hint:"D-3=A, U-3=R, F-3=C, D-3=A, Q-3=N, D-3=A. Mais vérifiez chaque lettre."}},
+{id:55,act:3,name:"Le Puits de Mémoire",theme:"horreur",badge:"badge-horreur",enigme:{type:"choix",label:"Récursion",titre:"La Suite Récursive",soustitre:"La machine calcule à l'infini…",texte:"f(1)=1, f(2)=1, f(n)=f(n-1)+f(n-2). Quelle est la valeur de f(8) ?",options:["13","21","34","55"],reponse:1,hint:"Fibonacci : 1,1,2,3,5,8,13,21… Comptez jusqu'au 8e terme."}},
+{id:56,act:3,name:"Le Labyrinthe Neuronal",theme:"aventure",badge:"badge-aventure",enigme:{type:"input",label:"Graphes",titre:"Le Chemin le Plus Court",soustitre:"Trouvez la route optimale…",texte:"Nœuds A-B-C-D-E. A→B=2, A→C=4, B→D=3, C→D=1, D→E=2, B→E=8. Quel est le coût minimal du chemin A→E ?",reponse:"7",hint:"Essayez A→B→D→E = 2+3+2=7. Comparez avec A→C→D→E = 4+1+2=7. Les deux font 7."}},
+{id:57,act:3,name:"L'Antre de l'Intelligence Artificielle",theme:"aventure",badge:"badge-aventure",enigme:{type:"choix",label:"Test de Turing",titre:"L'Entité",soustitre:"Qui est humain parmi ces réponses ?",texte:"Question posée : 'Avez-vous peur de mourir ?' — Réponse A : 'Non, je suis immortel.' — Réponse B : 'Cette question m'angoisse profondément.' — Réponse C : 'La mort n'est qu'une transition.' Quelle réponse vient probablement d'une IA ?",options:["Réponse A","Réponse B","Réponse C","Impossible à dire"],reponse:3,hint:"Un test de Turing parfait est indiscernable par définition."}},
+{id:58,act:3,name:"La Chambre des Paradoxes",theme:"horreur",badge:"badge-horreur",enigme:{type:"input",label:"Logique avancée",titre:"Le Menteur",soustitre:"Une phrase qui se contredit elle-même…",texte:"'Cette phrase est fausse.' Si elle est vraie, elle est fausse. Si elle est fausse, elle est vraie. Combien de valeurs de vérité peut-elle avoir simultanément ? (un chiffre)",reponse:"0",hint:"Elle n'est ni vraie ni fausse — c'est un paradoxe sans valeur de vérité stable."}},
+{id:59,act:3,name:"Le Cœur du Système",theme:"aventure",badge:"badge-aventure",enigme:{type:"choix",label:"Cryptographie avancée",titre:"Le Dernier Verrou",soustitre:"La clé finale est dans les nombres premiers…",texte:"Quel est le plus grand nombre premier inférieur à 50 ?",options:["47","48","49","43"],reponse:0,hint:"Un nombre premier n'est divisible que par 1 et lui-même. Vérifiez 47 : divisible par 2,3,5,7 ?"}},
+{id:60,act:3,name:"L'Origine — La Salle Zéro",theme:"aventure",badge:"badge-aventure",enigme:{type:"input",label:"Défi ultime",titre:"Le Mot de Passe Absolu",soustitre:"Soixante salles. Une seule vérité.",texte:"Vous avez traversé trois actes. Le nom du jeu est votre dernier mot de passe. Entrez-le en majuscules.",reponse:"ARCANA",hint:"Le nom du jeu, en majuscules."}}
+];
+const ENQUETES = [
+  {titre:"Le Mystère du Château Verlaine",tagline:"Un meurtre sans mobile apparent. Ou c'est ce qu'ils veulent vous faire croire.",lieu:"Château Verlaine, 23h47",rapport:"Le baron Édouard Verlaine a été retrouvé mort dans sa bibliothèque privée, une balle dans la tempe. La porte était verrouillée de l'intérieur. Son verre de cognac contenait des traces de sédatifs. L'alarme du château a été désactivée à 23h12 depuis le panneau de l'aile des domestiques.",suspects:[{nom:"Madame Colette Verlaine",role:"L'épouse",detail:"Hérite de tout. Affirme dormir depuis 22h."},{nom:"Victor Meunier",role:"Le secrétaire",detail:"A accès à toutes les clés. Connaît le code de l'alarme. Était « en ville »."},{ nom:"Rose Damant",role:"La femme de chambre",detail:"A servi le cognac. Tremblait lors de l'interrogatoire."}],indices:[{nom:"Le verre de cognac",desc:"Traces de sédatifs. Servi par Rose. Mais le baron n'avait bu que la moitié."},{nom:"L'alarme désactivée",desc:"Code entré à 23h12. Seules 3 personnes le connaissaient."},{nom:"La fenêtre",desc:"Fermée mais pas verrouillée. Traces de semelles sur le rebord extérieur."},{nom:"Le testament",desc:"Daté de la semaine dernière. Signé devant Victor Meunier comme témoin."}],coupable:1,explication:"Victor Meunier a désactivé l'alarme, est entré par la fenêtre, et a tiré sur le baron déjà à moitié endormi par les sédatifs. Il a verrouillé la porte de l'extérieur grâce à un double de clé, puis est ressorti par la fenêtre."},
+  {titre:"Mort sur le Quai 7",tagline:"Le dernier train ne reviendra pas. Mais l'assassin est toujours parmi vous.",lieu:"Gare Centrale, 06h33",rapport:"Un homme sans papiers gît sur le quai 7, poignardé. La gare était fermée mais trois membres du personnel étaient présents. Les caméras du quai 7 ont été sabotées entre 05h50 et 06h10. La victime portait une clé USB dans sa poche.",suspects:[{nom:"Sylvain Kopp",role:"Agent de sécurité",detail:"Absent 25 minutes pour un café situé à 8 minutes aller-retour."},{nom:"Nadia Brel",role:"Chef de gare",detail:"Avait accès à la salle de surveillance. Connaît le système de caméras."},{nom:"Thomas Ung",role:"Technicien",detail:"Outil de découpe retrouvé près du corps. Mais il était à 200m."}],indices:[{nom:"La clé USB",desc:"Connexion récente depuis un ordinateur de la gare."},{nom:"Les caméras",desc:"Sabotage manuel. Il fallait connaître leur emplacement exact."},{nom:"L'outil de découpe",desc:"Appartient à Thomas, mais son alibi pour l'heure du crime tient."},{nom:"Le café de Sylvain",desc:"25 minutes d'absence pour un trajet de 8 minutes maximum."}],coupable:1,explication:"Nadia Brel connaissait le système de caméras, les a sabotées depuis la salle de surveillance, a récupéré les données de la clé USB sur son ordinateur, puis a éliminé le porteur."},
+  {titre:"Le Poison du Grand Chef",tagline:"Dans les cuisines les plus raffinées se mijotent parfois les crimes les plus sombres.",lieu:"Restaurant Le Velours Noir, 21h15",rapport:"Auguste Mortier, chef étoilé, s'est effondré après avoir goûté son plat signature. Empoisonnement à l'aconitine — inodore et sans goût une fois dilué. Il avait reçu des menaces anonymes après avoir évincé une candidate lors d'une émission télévisée.",suspects:[{nom:"Camille Aubry",role:"Sous-chef",detail:"Évincée de l'émission par Mortier. 3 accès à la cuisine ce soir-là."},{nom:"Patrick Loir",role:"Fournisseur",detail:"A livré des herbes fraîches à 20h30. Une plante non commandée était dans la livraison."},{nom:"Élise Renner",role:"Critique gastronomique",detail:"A eu accès à la salle à 20h45 pour une dégustation privée."}],indices:[{nom:"Les herbes fraîches",desc:"L'aconitine se tire de l'aconit. La livraison contenait de l'aconit non commandé."},{nom:"Les menaces anonymes",desc:"Adresse mail créée 3 jours après l'émission télévisée."},{nom:"Le registre de badges",desc:"Camille : accès à 20h15, 20h52 et 21h03."},{nom:"Le carnet de recettes",desc:"Une page a été arrachée — celle de la recette empoisonnée."}],coupable:0,explication:"Camille Aubry a introduit l'aconitine dans les herbes du plat signature. Ses 3 accès correspondent à la préparation, l'empoisonnement, et une tentative de récupérer le carnet. Elle avait commandité la livraison d'aconit via un tiers."},
+  {titre:"La Galerie des Disparus",tagline:"Un tableau a disparu. C'est le gardien qui devrait le plus inquiéter.",lieu:"Musée Granval, 02h19",rapport:"Le tableau 'Nuit Éternelle' (4,2 millions €) a été décroché et remplacé par une reproduction. Les détecteurs de mouvement n'ont pas déclenché l'alarme. Le tableau mesure 2m×1,5m — impossible à sortir seul.",suspects:[{nom:"Henri Descartes",role:"Gardien de nuit",detail:"Seul sur place. Virement de 50 000€ reçu il y a 10 jours."},{nom:"Sophia Kaan",role:"Restauratrice d'art",detail:"A travaillé sur le tableau la semaine passée. Connaît ses dimensions exactes."},{nom:"Marc Tellier",role:"Directeur du musée",detail:"Dettes de jeu. Connaît tous les codes. A généré un code à usage unique 3 jours avant."}],indices:[{nom:"Le virement",desc:"50 000€ sur le compte de Descartes, depuis les Caïmans."},{nom:"La reproduction",desc:"Précision extraordinaire — plusieurs jours de travail minimum."},{nom:"Le code à usage unique",desc:"Généré par le système 3 jours avant le vol par le directeur."},{nom:"Les traces de roues",desc:"Marques d'un chariot lourd dans le couloir de service."}],coupable:2,explication:"Marc Tellier a orchestré le vol : il a généré le code, versé 50 000€ à Descartes pour regarder ailleurs, commandé la reproduction à Sophia à son insu, et fait sortir le tableau via le couloir de service avec un complice externe."},
+  {titre:"L'Accident du Laboratoire",tagline:"On a dit que c'était un accident. Les probabilités en disent autrement.",lieu:"Institut Biotech Seravex, 14h07",rapport:"Le Dr Pelletier est mort dans une explosion. L'enquête conclut à un accident. Mais son assistante affirme que la paillasse était réarrangée ce matin-là. Pelletier avait découvert une fraude dans les données pouvant annuler un contrat de 200 millions.",suspects:[{nom:"Dr. Isabelle Favre",role:"Directrice de recherche",detail:"Responsable du contrat de 200M. Avait une clé du labo. Arrivée à 6h30."},{nom:"Luc Marton",role:"Technicien",detail:"Entré à 7h12, sorti à 15h30. Empreintes partielles non identifiées sur les flacons."},{nom:"Conrad Weiss",role:"Investisseur",detail:"80M investis. Un scandale le ruinerait. Mais pas d'accès au labo."}],indices:[{nom:"La paillasse dérangée",desc:"Réactifs repositionnés pour que le mélange soit inévitable lors des manipulations habituelles."},{nom:"L'email de Pelletier",desc:"Envoyé à 13h52 : « J'ai les preuves. Je contacte l'ANSM demain. »"},{nom:"Les empreintes",desc:"Partielles non identifiées sur les flacons repositionnés."},{nom:"Le badge d'entrée",desc:"Favre est entrée à 6h30, avant tout le monde, avec sa clé personnelle."}],coupable:0,explication:"Le Dr. Favre a repositionné les réactifs tôt le matin (avant l'arrivée des autres) pour créer une explosion inévitable. Elle avait lu l'email brouillon de Pelletier sur l'ordinateur partagé et devait agir avant le lendemain."}
+];
+
+// ============================================================
+// ============================================================
+// MOTEUR AUDIO AMBIANTAL PROCÉDURAL
+// Chaque thème génère sa propre musique et ambiance en temps réel
+// Zéro fichier externe — tout synthétisé via Web Audio API
+// ============================================================
+const AUDIO = {
+  ctx: null,
+  masterGain: null,
+  activeNodes: [],   // noeuds en cours — pour les stopper proprement
+  ambientLoop: null,
+  melodyLoop: null,
+  isMuted: false,
+
+  init() {
+    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
+    try {
+      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      this.masterGain = this.ctx.createGain();
+      this.masterGain.gain.value = 0.55;
+      this.masterGain.connect(this.ctx.destination);
+    } catch(e) { console.warn('Audio non disponible', e); }
+  },
+
+  // Arrête tout ce qui tourne
+  stopAll() {
+    this.activeNodes.forEach(n => { try { n.stop(); } catch(e){} });
+    this.activeNodes = [];
+    clearTimeout(this.ambientLoop);
+    clearTimeout(this.melodyLoop);
+  },
+
+  // Utilitaire : oscillateur simple
+  osc(freq, type, vol, attack, decay, dest) {
+    if (!this.ctx || this.isMuted) return null;
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(0, this.ctx.currentTime);
+    g.gain.linearRampToValueAtTime(vol, this.ctx.currentTime + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + attack + decay);
+    o.connect(g); g.connect(dest || this.masterGain);
+    o.start(); o.stop(this.ctx.currentTime + attack + decay + 0.05);
+    this.activeNodes.push(o);
+    return o;
+  },
+
+  // Bruit coloré (vent, eau, feu, souffle)
+  noise(dur, vol, filterFreq, filterType) {
+    if (!this.ctx || this.isMuted) return;
+    const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * dur, this.ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = filterType || 'lowpass';
+    filter.frequency.value = filterFreq || 400;
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(0, this.ctx.currentTime);
+    g.gain.linearRampToValueAtTime(vol, this.ctx.currentTime + 0.5);
+    g.gain.linearRampToValueAtTime(vol, this.ctx.currentTime + dur - 0.5);
+    g.gain.linearRampToValueAtTime(0, this.ctx.currentTime + dur);
+    src.connect(filter); filter.connect(g); g.connect(this.masterGain);
+    src.start(); src.stop(this.ctx.currentTime + dur);
+    this.activeNodes.push(src);
+  },
+
+  // Reverb simple via convolution
+  makeReverb(dur = 2) {
+    if (!this.ctx) return this.masterGain;
+    const len = this.ctx.sampleRate * dur;
+    const buf = this.ctx.createBuffer(2, len, this.ctx.sampleRate);
+    for (let c = 0; c < 2; c++) {
+      const d = buf.getChannelData(c);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2);
+    }
+    const conv = this.ctx.createConvolver();
+    conv.buffer = buf;
+    const wet = this.ctx.createGain(); wet.gain.value = 0.35;
+    conv.connect(wet); wet.connect(this.masterGain);
+    return conv;
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // AMBIANCES PAR THÈME
+  // ─────────────────────────────────────────────────────────
+
+  // MÉDIÉVAL : luth, cordes, cloche, vent de pierre
+  startMedieval() {
+    this.init(); this.stopAll();
+    if (this.isMuted) return;
+    const rev = this.makeReverb(3);
+    const playLute = () => {
+      if (this.isMuted) return;
+      // Gamme pentatonique médiévale en Ré dorien
+      const scale = [293.66, 329.63, 369.99, 440, 493.88, 587.33, 659.25, 740];
+      const note = scale[Math.floor(Math.random() * scale.length)];
+      this.osc(note, 'triangle', 0.08, 0.02, 0.8, rev);
+      // Corde grave de luth
+      if (Math.random() > 0.6) this.osc(note/2, 'sawtooth', 0.03, 0.01, 1.2, rev);
+      this.melodyLoop = setTimeout(playLute, 400 + Math.random() * 700);
+    };
+    // Drone de cornemuse grave
+    const droneFreqs = [73.42, 110, 146.83];
+    droneFreqs.forEach(f => {
+      const playDrone = () => {
+        if (this.isMuted) return;
+        this.osc(f, 'sawtooth', 0.018, 0.3, 4.5, rev);
+        setTimeout(playDrone, 4000 + Math.random() * 1000);
+      };
+      setTimeout(playDrone, Math.random() * 2000);
+    });
+    // Vent dans les pierres
+    const windLoop = () => {
+      if (this.isMuted) return;
+      this.noise(5, 0.025, 300 + Math.random() * 200);
+      this.ambientLoop = setTimeout(windLoop, 4500 + Math.random() * 2000);
+    };
+    windLoop();
+    // Cloche lointaine
+    const bellLoop = () => {
+      if (this.isMuted) return;
+      if (Math.random() > 0.5) this.osc(440 * Math.pow(2, Math.floor(Math.random()*3-1)/12), 'sine', 0.04, 0.005, 3, rev);
+      setTimeout(bellLoop, 6000 + Math.random() * 8000);
+    };
+    setTimeout(bellLoop, 3000);
+    playLute();
+  },
+
+  // HORREUR : dissonances, grincements, respiration, basses profondes
+  startHorreur() {
+    this.init(); this.stopAll();
+    if (this.isMuted) return;
+    const rev = this.makeReverb(4);
+    // Bourdon dissonant — intervalle de triton (diabolus in musica)
+    const playDoom = () => {
+      if (this.isMuted) return;
+      const base = 55 + Math.random() * 20;
+      this.osc(base, 'sawtooth', 0.04, 0.8, 5, rev);
+      this.osc(base * Math.pow(2, 6/12), 'sawtooth', 0.03, 0.8, 5, rev); // triton
+      this.osc(base * 2, 'square', 0.012, 0.5, 3, rev);
+      this.ambientLoop = setTimeout(playDoom, 5500 + Math.random() * 2000);
+    };
+    // Respiration sourde
+    const breathLoop = () => {
+      if (this.isMuted) return;
+      this.noise(2.5, 0.04, 600, 'bandpass');
+      setTimeout(breathLoop, 4000 + Math.random() * 3000);
+    };
+    // Grincement de porte
+    const creakLoop = () => {
+      if (this.isMuted) return;
+      if (Math.random() > 0.4) {
+        const f = 180 + Math.random() * 120;
+        this.osc(f, 'sawtooth', 0.035, 0.05, 0.4, rev);
+        this.osc(f * 1.02, 'sawtooth', 0.02, 0.05, 0.35, rev); // légère dissonance
+      }
+      this.melodyLoop = setTimeout(creakLoop, 3000 + Math.random() * 5000);
+    };
+    // Battement de coeur profond
+    const heartLoop = () => {
+      if (this.isMuted) return;
+      this.osc(50, 'sine', 0.09, 0.01, 0.12, rev);
+      setTimeout(() => { if(!this.isMuted) this.osc(45, 'sine', 0.06, 0.01, 0.1, rev); }, 150);
+      setTimeout(heartLoop, 900 + Math.random() * 400);
+    };
+    playDoom(); breathLoop(); creakLoop();
+    setTimeout(heartLoop, 2000);
+  },
+
+  // AVENTURE : orchestre épique, cuivres, percussions, vent tropical
+  startAventure() {
+    this.init(); this.stopAll();
+    if (this.isMuted) return;
+    const rev = this.makeReverb(2.5);
+    // Mélodie héroïque — gamme majeure sol
+    const melody = [392, 440, 493.88, 523.25, 587.33, 659.25, 739.99, 783.99];
+    const harmony = [196, 220, 246.94, 261.63, 293.66, 329.63, 369.99, 392];
+    let step = 0;
+    const playHero = () => {
+      if (this.isMuted) return;
+      const m = melody[step % melody.length];
+      const h = harmony[step % harmony.length];
+      this.osc(m, 'triangle', 0.06, 0.05, 0.5, rev);
+      this.osc(h, 'triangle', 0.035, 0.05, 0.6, rev);
+      // Pizzicato de corde
+      if (step % 3 === 0) this.osc(h/2, 'sawtooth', 0.025, 0.01, 0.3, rev);
+      step++;
+      this.melodyLoop = setTimeout(playHero, 350 + Math.random() * 200);
+    };
+    // Percussion tribale (tam-tam)
+    const drumLoop = () => {
+      if (this.isMuted) return;
+      const hit = Math.random();
+      if (hit > 0.6) { this.osc(80, 'sine', 0.1, 0.005, 0.15); this.noise(0.12, 0.05, 500); }
+      else if (hit > 0.3) { this.osc(120, 'triangle', 0.06, 0.005, 0.1); }
+      this.ambientLoop = setTimeout(drumLoop, 250 + Math.random() * 200);
+    };
+    // Vent tropical
+    const windLoop = () => {
+      if (this.isMuted) return;
+      this.noise(4, 0.02, 1200, 'highpass');
+      setTimeout(windLoop, 3500 + Math.random() * 2000);
+    };
+    // Cuivre épique
+    const brassLoop = () => {
+      if (this.isMuted) return;
+      if (Math.random() > 0.5) {
+        const brassNote = [196, 220, 261.63, 293.66][Math.floor(Math.random()*4)];
+        this.osc(brassNote, 'sawtooth', 0.045, 0.1, 1.8, rev);
+        this.osc(brassNote*1.5, 'sawtooth', 0.02, 0.1, 1.5, rev);
+      }
+      setTimeout(brassLoop, 4000 + Math.random() * 3000);
+    };
+    playHero(); windLoop();
+    setTimeout(drumLoop, 800);
+    setTimeout(brassLoop, 2000);
+  },
+
+  // ENQUÊTE POLICIÈRE : jazz noir, piano, contrebasse, pluie, saxophone
+  startEnquete() {
+    this.init(); this.stopAll();
+    if (this.isMuted) return;
+    const rev = this.makeReverb(1.8);
+    // Gamme blues en La mineur
+    const blues = [220, 246.94, 261.63, 277.18, 293.66, 329.63, 369.99, 440, 493.88];
+    const bass  = [55, 65.41, 73.42, 82.41, 87.31, 98, 110];
+    let beat = 0;
+    // Piano jazz (accords + impro)
+    const pianoLoop = () => {
+      if (this.isMuted) return;
+      if (beat % 2 === 0) {
+        // Accord jazz
+        const root = blues[Math.floor(Math.random() * 4)];
+        this.osc(root, 'triangle', 0.04, 0.01, 0.35, rev);
+        this.osc(root * Math.pow(2, 3/12), 'triangle', 0.03, 0.01, 0.3, rev); // tierce mineure
+        this.osc(root * Math.pow(2, 7/12), 'triangle', 0.025, 0.01, 0.28, rev); // quinte
+        this.osc(root * Math.pow(2, 10/12), 'triangle', 0.02, 0.01, 0.25, rev); // 7e mineure
+      } else if (Math.random() > 0.4) {
+        // Improvisation mélodique
+        this.osc(blues[Math.floor(Math.random() * blues.length)], 'triangle', 0.035, 0.01, 0.25, rev);
+      }
+      beat++;
+      this.melodyLoop = setTimeout(pianoLoop, 280 + Math.random() * 180);
+    };
+    // Contrebasse pizzicato
+    const bassLoop = () => {
+      if (this.isMuted) return;
+      if (Math.random() > 0.3) this.osc(bass[Math.floor(Math.random()*bass.length)], 'sawtooth', 0.055, 0.01, 0.4, rev);
+      this.ambientLoop = setTimeout(bassLoop, 400 + Math.random() * 250);
+    };
+    // Cymbale douce (hi-hat)
+    const hihatLoop = () => {
+      if (this.isMuted) return;
+      if (Math.random() > 0.45) this.noise(0.08, 0.03, 8000, 'highpass');
+      setTimeout(hihatLoop, 200 + Math.random() * 150);
+    };
+    // Pluie sur vitre
+    const rainLoop = () => {
+      if (this.isMuted) return;
+      this.noise(6, 0.028, 3000, 'bandpass');
+      setTimeout(rainLoop, 5500 + Math.random() * 1500);
+    };
+    // Saxophone grave (motif court)
+    const saxLoop = () => {
+      if (this.isMuted) return;
+      if (Math.random() > 0.6) {
+        const saxNote = blues[Math.floor(Math.random() * 5)];
+        this.osc(saxNote * 0.5, 'sawtooth', 0.042, 0.08, 1.2, rev);
+        this.osc(saxNote * 0.5 * Math.pow(2, 4/12), 'sawtooth', 0.025, 0.1, 0.9, rev);
+      }
+      setTimeout(saxLoop, 2500 + Math.random() * 3000);
+    };
+    // Kick feutré (caisse sourde jazz)
+    const kickLoop = () => {
+      if (this.isMuted) return;
+      if (Math.random() > 0.5) this.osc(60, 'sine', 0.07, 0.005, 0.08);
+      setTimeout(kickLoop, 500 + Math.random() * 300);
+    };
+    pianoLoop(); bassLoop(); rainLoop();
+    setTimeout(hihatLoop, 500);
+    setTimeout(saxLoop, 3000);
+    setTimeout(kickLoop, 1000);
+  },
+
+  // MENU : ambiance mystérieuse, pad éthéré
+  startMenu() {
+    this.init(); this.stopAll();
+    if (this.isMuted) return;
+    const rev = this.makeReverb(5);
+    const pad = [130.81, 155.56, 196, 246.94, 261.63];
+    let pi = 0;
+    const padLoop = () => {
+      if (this.isMuted) return;
+      const f = pad[pi % pad.length];
+      this.osc(f, 'sine', 0.03, 0.8, 4, rev);
+      this.osc(f * 2, 'sine', 0.015, 1, 3, rev);
+      pi++;
+      setTimeout(padLoop, 2500 + Math.random() * 1500);
+    };
+    this.noise(8, 0.015, 250);
+    padLoop();
+    setTimeout(() => { if(!this.isMuted) { this.noise(8, 0.015, 250); } }, 8000);
+  },
+
+  // ─────────────────────────────────────────────────────────
+  // SFX UI
+  // ─────────────────────────────────────────────────────────
+  playSuccess() {
+    this.init();
+    [523, 659, 784, 1047].forEach((n,i) =>
+      setTimeout(() => this.osc(n,'sine',0.12,0.02,0.22), i*110));
+  },
+  playError() {
+    this.init();
+    this.osc(220,'sawtooth',0.07,0.01,0.18);
+    setTimeout(() => this.osc(185,'sawtooth',0.05,0.01,0.22), 160);
+  },
+  playClick() {
+    this.init();
+    this.osc(1200,'square',0.04,0.002,0.04);
+  },
+  playVictory() {
+    this.init();
+    const fanfare = [523,659,784,1047,1319];
+    fanfare.forEach((n,i) => {
+      setTimeout(() => { this.osc(n,'triangle',0.1,0.02,0.35); this.osc(n*1.5,'sine',0.04,0.02,0.25); }, i*130);
+    });
+  },
+  playDoorOpen() {
+    this.init();
+    this.osc(180,'sawtooth',0.06,0.05,0.4);
+    this.osc(175,'sawtooth',0.04,0.06,0.5);
+    setTimeout(() => this.noise(0.3, 0.04, 400), 200);
+  },
+
+  // Toggle mute
+  toggleMute() {
+    this.isMuted = !this.isMuted;
+    if (this.isMuted) { this.stopAll(); }
+    const icon = this.isMuted ? '🔇' : '🔊';
+    const label = this.isMuted ? '🔇 Son désactivé' : '🔊 Son activé';
+    document.querySelectorAll('.muteBtn').forEach(b => {
+      b.textContent = b.classList.contains('hud-btn') ? icon : label;
+    });
+  }
+};
+
+// ============================================================
+// ÉTAT
+// ============================================================
+let gs={completed:[],currentRoom:0,timer:0,timerInterval:null,totalTime:0,streak:0,lastEnq:'',enqSolvedToday:localStorage.getItem('arcana_enqSolved')||''};
+let currentEnigme=null;
+
+// ============================================================
+// INIT
+// ============================================================
+function unlockAndStart() {
+  const splash = document.getElementById('audioUnlock');
+  splash.style.transition = 'opacity 0.5s';
+  splash.style.opacity = '0';
+  setTimeout(() => { splash.style.display = 'none'; }, 500);
+  AUDIO.init();
+  // Charger la progression sauvegardée (chrome.sync ou local)
+  loadSavedProgress().then(() => {
+    updateStats();
+    askNameIfNeeded(() => {
+      const loader = document.getElementById('loader');
+      loader.style.display = 'flex';
+      setTimeout(() => {
+        loader.style.transition = 'opacity 0.7s';
+        loader.style.opacity = '0';
+        setTimeout(() => {
+          loader.style.display = 'none';
+          showMenu();
+        }, 700);
+      }, 1800);
+    });
+  });
+}
+
+window.addEventListener('load', () => {
+  // Pré-charger stats depuis localStorage en attendant le clic
+  const local = localStorage.getItem('arcana_save');
+  if (local) { try { const s=JSON.parse(local); gs.completed=s.completed||[]; gs.totalTime=s.totalTime||0; } catch(e){} }
+  gs.streak = parseInt(localStorage.getItem('arcana_streak')||'0');
+  gs.lastEnq = localStorage.getItem('arcana_lastEnq')||'';
+  updateStats();
+});
+
+function resetGame(){
+  gs.completed=[];gs.currentRoom=0;gs.totalTime=0;
+  save();
+  fsSet('players',getPlayerCode(), {name:getPlayerName(),completed:[],totalTime:0,streak:gs.streak,score:0}).catch(()=>{});
+  updateStats();
+}
+function updateStats(){
+  document.getElementById('statRooms').textContent=gs.completed.length;
+  document.getElementById('statStreak').textContent=gs.streak;
+  if(gs.totalTime>0){document.getElementById('statTime').textContent=formatTime(gs.totalTime);}
+}
+
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function hideAll(){['menu','map-screen','game-screen','enquetes-screen','classement-screen','victory-room','final-victory'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});clearInterval(gs.timerInterval);}
+function showMenu(){hideAll();updateStats();document.getElementById('menu').style.display='block';AUDIO.startMenu();}
+
+// ============================================================
+// MAP
+// ============================================================
+function showMap(){
+  hideAll();
+  const done=gs.completed.length;
+  document.getElementById('mapProg').textContent=`${done} / 60 complétées`;
+  document.getElementById('mapFill').style.width=`${done/60*100}%`;
+  buildMap();
+  document.getElementById('map-screen').style.display='block';
+}
+
+const ACT_IMAGES=(() => {
+  const ids1=[1029,1060,139,1011,160,145,1015,1036,110,1002,355,1044,167,1042,1018,1062,194,1047,1012,1019];
+  const ids2=[1033,1080,83,256,1042,1062,193,142,248,292,299,317,360,399,417,445,463,485,503,513];
+  const ids3=[524,534,543,552,561,570,579,587,596,605,614,623,632,641,650,659,668,677,686,695];
+  return [...ids1,...ids2,...ids3].map(id=>`https://picsum.photos/id/${id}/400/240`);
+})();
+
+const ACT_INFO=[
+  {num:1,title:"Acte I",subtitle:"Le Manoir Maudit",color:"#8b4020",range:[1,20],diff:"★ Débutant"},
+  {num:2,title:"Acte II",subtitle:"La Cité Perdue",color:"#1a5a3a",range:[21,40],diff:"★★ Confirmé"},
+  {num:3,title:"Acte III",subtitle:"Le Vaisseau de l'Oubli",color:"#1a2a5a",range:[41,60],diff:"★★★ Expert"}
+];
+
+function buildMap(){
+  const g=document.getElementById('mapGrid');
+  g.innerHTML='';
+  g.style.cssText='padding:20px 24px;display:block';
+
+  ACT_INFO.forEach(act=>{
+    // Header de l'acte
+    const actDone=gs.completed.filter(id=>id>=act.range[0]&&id<=act.range[1]).length;
+    const actTotal=20;
+    const header=document.createElement('div');
+    header.style.cssText='display:flex;align-items:center;gap:14px;padding:18px 0 12px;border-bottom:2px solid '+act.color+'44;margin-bottom:14px';
+    header.innerHTML=`
+      <div style="background:${act.color};color:white;font-family:'Cinzel Decorative',serif;font-size:0.6rem;padding:4px 12px;border-radius:20px;letter-spacing:0.15em;white-space:nowrap">${act.title}</div>
+      <div style="flex:1">
+        <div style="font-family:'Cinzel Decorative',serif;font-size:0.95rem;color:var(--brun)">${act.subtitle}</div>
+        <div style="font-size:0.7rem;color:var(--gris);margin-top:2px">${actDone}/${actTotal} · ${act.diff}</div>
+      </div>
+      <div style="height:4px;width:100px;background:var(--creme3);border-radius:2px;overflow:hidden;flex-shrink:0"><div style="height:100%;background:${act.color};width:${actDone/actTotal*100}%;transition:width 0.5s"></div></div>
+    `;
+    g.appendChild(header);
+
+    // Grille des salles
+    const grid=document.createElement('div');
+    grid.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:12px;margin-bottom:32px';
+
+    ROOMS.filter(r=>r.id>=act.range[0]&&r.id<=act.range[1]).forEach(r=>{
+      const idx=r.id-1;
+      const done=gs.completed.includes(r.id);
+      const unlocked=r.id===1||gs.completed.includes(r.id-1);
+      const current=!done&&unlocked;
+      const card=document.createElement('div');
+      card.className='room-card'+(done?' completed':(current?' current':' locked'));
+      const imgUrl=ACT_IMAGES[idx]||`https://picsum.photos/id/${(idx*13+50)%800+10}/400/240`;
+      card.innerHTML=`
+        <div style="position:relative;height:95px;overflow:hidden;background:#1a1208">
+          <img src="${imgUrl}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.4s;${!unlocked?'filter:grayscale(0.8) brightness(0.45)':''}">
+          ${done?`<div style="position:absolute;top:6px;right:6px;background:${act.color};color:white;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700">✓</div>`:''}
+          ${!unlocked?'<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:rgba(255,255,255,0.4)">🔒</div>':''}
+          ${current?`<div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:${act.color};animation:btnPulse 1.5s infinite"></div>`:''}
+        </div>
+        <div style="padding:8px 10px 10px">
+          <div style="font-size:0.58rem;text-transform:uppercase;letter-spacing:0.18em;color:${act.color};font-weight:700">Salle ${String(r.id).padStart(2,'0')}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:0.88rem;color:var(--brun);font-weight:600;margin-top:1px;line-height:1.25">${r.name}</div>
+        </div>
+      `;
+      if(unlocked){card.style.cursor='pointer';card.addEventListener('click',()=>{AUDIO.playClick();startRoom(ROOMS.findIndex(x=>x.id===r.id));});}
+      grid.appendChild(card);
+    });
+    g.appendChild(grid);
+  });
+}
+
+
+// ============================================================
+// JEU
+// ============================================================
+function startRoom(idx){
+  hideAll();
+  const r=ROOMS[idx];gs.currentRoom=idx;
+  document.getElementById('hudNum').textContent=`Salle ${String(r.id).padStart(2,'0')}`;
+  document.getElementById('hudName').textContent=r.name;
+  document.getElementById('sceneImg').style.backgroundImage=`url('${ACT_IMAGES[idx]||`https://picsum.photos/id/${(idx*13+50)%800+10}/900/500`}')`;
+  buildHotspots(r);
+  startTimer();
+  document.getElementById('game-screen').style.display='block';
+  AUDIO.playDoorOpen();
+  setTimeout(()=>{
+    if(r.theme==='medieval') AUDIO.startMedieval();
+    else if(r.theme==='horreur') AUDIO.startHorreur();
+    else AUDIO.startAventure();
+  }, 600);
+}
+function buildHotspots(r){
+  const c=document.getElementById('hotspotsContainer');c.innerHTML='';
+
+  // ── BANNIÈRE BAS D'ÉCRAN (toujours visible) ──
+  const banner=document.createElement('div');
+  banner.style.cssText='position:absolute;bottom:0;left:0;right:0;padding:20px 24px;background:linear-gradient(to top,rgba(245,240,232,0.98) 60%,transparent);display:flex;align-items:center;justify-content:center;gap:16px;pointer-events:all';
+  banner.innerHTML=`
+    <button onclick="AUDIO.playClick();openEnigme(window._currentRoom)" style="
+      padding:16px 48px;
+      background:var(--or);
+      color:var(--creme);
+      border:none;
+      font-family:'Cinzel Decorative',serif;
+      font-size:0.95rem;
+      letter-spacing:0.15em;
+      cursor:pointer;
+      border-radius:8px;
+      box-shadow:0 4px 20px rgba(184,150,62,0.5);
+      transition:all 0.2s;
+      animation:btnPulse 2s ease-in-out infinite;
+    " onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 28px rgba(184,150,62,0.6)'"
+       onmouseout="this.style.transform='none';this.style.boxShadow='0 4px 20px rgba(184,150,62,0.5)'">
+      🔍 Résoudre l'énigme
+    </button>
+  `;
+  c.appendChild(banner);
+
+  // ── POINT LUMINEUX CENTRAL (cliquable aussi) ──
+  const hs=document.createElement('div');
+  hs.className='hotspot';
+  hs.style.cssText='left:50%;top:42%';
+  hs.innerHTML=`
+    <div class="hs-ring"></div>
+    <div class="hs-dot"></div>
+    <div class="hs-label">Examiner</div>
+  `;
+  hs.addEventListener('click',()=>{AUDIO.playClick();openEnigme(r);});
+  c.appendChild(hs);
+
+  // Stocker la salle courante pour le bouton bannière
+  window._currentRoom = r;
+
+  // Points décoratifs discrets
+  [{l:'18%',t:'60%',label:'Observer'},{l:'78%',t:'55%',label:'Inspecter'}].forEach(d=>{
+    const h=document.createElement('div');
+    h.className='hotspot';h.style.cssText=`left:${d.l};top:${d.t}`;
+    h.innerHTML=`<div class="hs-ring" style="width:28px;height:28px;border-color:rgba(184,150,62,0.3)"></div><div class="hs-dot" style="width:6px;height:6px"></div><div class="hs-label">${d.label}</div>`;
+    h.addEventListener('click',()=>showFloatMsg(["Rien d'inhabituellement suspect ici…","L'atmosphère est lourde. Résolvez l'énigme principale."][Math.floor(Math.random()*2)]));
+    c.appendChild(h);
+  });
+}
+function showFloatMsg(txt){
+  const m=document.createElement('div');
+  m.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(245,240,232,0.96);color:#3a2a14;font-family:Cormorant Garamond,serif;font-style:italic;padding:10px 22px;border-radius:24px;border:1px solid #d4c8b0;z-index:999;pointer-events:none;font-size:0.95rem;box-shadow:0 4px 16px rgba(58,42,20,0.15)';
+  m.textContent=txt;document.body.appendChild(m);
+  setTimeout(()=>{m.style.transition='opacity 0.5s';m.style.opacity='0';setTimeout(()=>m.remove(),500);},2200);
+}
+function startTimer(){
+  gs.timer=0;clearInterval(gs.timerInterval);
+  gs.timerInterval=setInterval(()=>{
+    gs.timer++;
+    const m=Math.floor(gs.timer/60).toString().padStart(2,'0');
+    const s=(gs.timer%60).toString().padStart(2,'0');
+    const el=document.getElementById('hudTimer');
+    el.textContent=`${m}:${s}`;
+    el.classList.toggle('urgent',gs.timer>120);
+  },1000);
+}
+
+// ============================================================
+// ÉNIGME
+// ============================================================
+function openEnigme(r){
+  currentEnigme=r.enigme;const e=r.enigme;const idx=gs.currentRoom;
+  document.getElementById('mLabel').textContent=e.label;
+  document.getElementById('mTitle').textContent=e.titre;
+  document.getElementById('mSub').textContent=e.soustitre;
+  document.getElementById('mText').textContent=e.texte;
+  document.getElementById('mHint').textContent=e.hint;
+  document.getElementById('mHint').style.display='none';
+  document.getElementById('mFeedback').style.display='none';
+  document.getElementById('mFeedback').className='feedback';
+  document.getElementById('mInput').value='';
+
+  // Injecter l'illustration SVG spécifique à cette énigme
+  const illu = document.getElementById('mIllustration');
+  illu.innerHTML = getEnigmeSVG(idx);
+
+  const opts=document.getElementById('mOptions');
+  const inp=document.getElementById('mInputRow');
+  opts.innerHTML='';opts.style.display='none';inp.style.display='none';
+  if(e.type==='choix'){
+    opts.style.display='grid';
+    e.options.forEach((o,i)=>{
+      const b=document.createElement('button');b.className='e-opt';b.textContent=o;
+      b.addEventListener('click',()=>{AUDIO.playClick();checkChoice(i,e.reponse,b);});
+      opts.appendChild(b);
+    });
+  } else {
+    inp.style.display='flex';
+    // Retirer l'ancien listener pour éviter les doublons
+    const newInput = document.getElementById('mInput');
+    const clone = newInput.cloneNode(true);
+    newInput.parentNode.replaceChild(clone, newInput);
+    clone.addEventListener('keydown', ev=>{if(ev.key==='Enter') checkInput();});
+  }
+  document.getElementById('enigmeModal').classList.add('open');
+}
+function closeModal(){document.getElementById('enigmeModal').classList.remove('open');}
+function toggleHint(){const h=document.getElementById('mHint');const show=h.style.display==='none';h.style.display=show?'block':'none';}
+function showHintDirect(){const r=ROOMS[gs.currentRoom];if(r){openEnigme(r);setTimeout(toggleHint,300);}}
+function checkChoice(chosen,correct,btn){
+  const opts=document.querySelectorAll('.e-opt');opts.forEach(o=>o.disabled=true);
+  const fb=document.getElementById('mFeedback');
+  if(chosen===correct){btn.classList.add('correct');fb.textContent='✓ Exact ! Vous progressez vers la vérité…';fb.className='feedback ok';fb.style.display='block';AUDIO.playSuccess();setTimeout(()=>{closeModal();completeRoom();},1600);}
+  else{btn.classList.add('wrong');opts[correct].classList.add('correct');fb.textContent='✗ Mauvaise réponse. La bonne est surlignée.';fb.className='feedback ko';fb.style.display='block';AUDIO.playError();setTimeout(()=>{opts.forEach(o=>{o.disabled=false;o.className='e-opt';});fb.style.display='none';},2200);}
+}
+function checkInput(){
+  const val=document.getElementById('mInput').value.trim().toUpperCase();
+  const correct=currentEnigme.reponse.toString().toUpperCase();
+  const fb=document.getElementById('mFeedback');
+  if(val===correct){fb.textContent='✓ Exact ! Vous progressez…';fb.className='feedback ok';fb.style.display='block';AUDIO.playSuccess();setTimeout(()=>{closeModal();completeRoom();},1600);}
+  else{fb.textContent='✗ Mauvaise réponse. Réfléchissez encore…';fb.className='feedback ko';fb.style.display='block';AUDIO.playError();setTimeout(()=>{fb.style.display='none';},2200);}
+}
+
+// ============================================================
+// COMPLÉTION
+// ============================================================
+// ============================================================
+// SYSTÈME DE SCORE PERSISTANT
+// — Nom demandé UNE seule fois (stocké en localStorage)
+// — Score mis à jour automatiquement à chaque salle résolue
+// — Classement visible sans rien remplir
+// ============================================================
+
+// ============================================================
+// SYSTÈME DE SAUVEGARDE CLOUD — JSONBin.io
+// Progression + classement persistants sur tous les appareils
+// Le joueur entre son pseudo UNE fois → code unique généré
+// À la reconnexion depuis n'importe où → retrouve tout
+// ============================================================
+
+// ============================================================
+// SYSTÈME DE SAUVEGARDE — chrome.storage.sync
+// Synchronisation automatique entre tous les appareils Chrome
+// connectés au même compte Google. Fallback localStorage si
+// l'extension Chrome n'est pas disponible (autre navigateur).
+// ============================================================
+
+// Détecte si chrome.storage.sync est disponible
+// ============================================================
+// SYSTÈME DE SAUVEGARDE — Firebase Firestore (gratuit)
+// Synchronisation réelle entre tous les appareils et navigateurs
+// Fallback localStorage si hors ligne
+// ============================================================
+
+// ════════════════════════════════════════════════════════════
+// CONFIGURATION CLOUD (optionnel)
+// Pour activer la synchro multi-appareils :
+// 1. Allez sur https://jsonbin.io → créez un compte gratuit
+// 2. Créez un bin {"scores":[]} → copiez son ID
+// 3. Allez dans API Keys → copiez votre clé maître
+// 4. Remplissez les deux lignes ci-dessous
+// ════════════════════════════════════════════════════════════
+const JSONBIN_KEY    = "$2a$10$RfU0JFO4Gs7KezAT6vAQc.5Z01vHo3DJDuu1VYtGfhHrOUiXIO2NG";
+const JSONBIN_BIN_ID = "6a2973ceda38895dfea70406";
+const CLOUD_ON = !!JSONBIN_KEY && !!JSONBIN_BIN_ID;
+
+async function cloudGetScores() {
+  if (!CLOUD_ON) return null;
+  try {
+    const r = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
+      headers: { 'X-Master-Key': JSONBIN_KEY, 'X-Bin-Meta': 'false' }
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    return Array.isArray(d.scores) ? d.scores : null;
+  } catch(e) { return null; }
+}
+
+async function cloudSetScores(scores) {
+  if (!CLOUD_ON) return;
+  try {
+    await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY },
+      body: JSON.stringify({ scores })
+    });
+  } catch(e) {}
+}
+
+// ── Utilitaires ──────────────────────────────────────────────
+function calcScore(rooms, time) {
+  return rooms * 150 + Math.max(0, 5000 - time * 2);
+}
+
+function formatTime(secs) {
+  const m = Math.floor(secs / 60).toString().padStart(2,'0');
+  const s = (secs % 60).toString().padStart(2,'0');
+  return `${m}:${s}`;
+}
+
+function getPlayerName() { return localStorage.getItem('arcana_player') || ''; }
+function getPlayerCode() { return localStorage.getItem('arcana_code')   || ''; }
+
+// ── Sauvegarde ────────────────────────────────────────────────
+function save() {
+  localStorage.setItem('arcana_save', JSON.stringify({
+    completed: gs.completed, totalTime: gs.totalTime
+  }));
+  localStorage.setItem('arcana_streak', gs.streak);
+  localStorage.setItem('arcana_lastEnq', gs.lastEnq);
+}
+
+async function autoSaveScore() {
+  save();
+  const code = getPlayerCode();
+  const name = getPlayerName();
+  if (!code || !name) return;
+  const score = calcScore(gs.completed.length, gs.totalTime);
+
+  // Backup local complet
+  const progData = { name, code, completed: gs.completed, totalTime: gs.totalTime, streak: gs.streak, lastEnq: gs.lastEnq||'', score, savedAt: Date.now() };
+  localStorage.setItem('arcana_progress_backup', JSON.stringify(progData));
+
+  // Classement local
+  const entry = { name, code, rooms: gs.completed.length, time: gs.totalTime, score, date: new Date().toLocaleDateString('fr-FR') };
+  let scores = JSON.parse(localStorage.getItem('arcana_scores') || '[]');
+  const idx = scores.findIndex(s => s.code === code);
+  if (idx >= 0) { if (score >= scores[idx].score) scores[idx] = entry; }
+  else scores.push(entry);
+  scores.sort((a, b) => b.score - a.score);
+  scores = scores.slice(0, 100);
+  localStorage.setItem('arcana_scores', JSON.stringify(scores));
+
+  // Cloud (si configuré)
+  if (CLOUD_ON) cloudSetScores(scores).catch(()=>{});
+}
+
+// ── Chargement ────────────────────────────────────────────────
+async function loadSavedProgress() {
+  // 1. Backup complet (le plus fiable)
+  const backup = localStorage.getItem('arcana_progress_backup');
+  if (backup) {
+    try {
+      const b = JSON.parse(backup);
+      gs.completed = b.completed || [];
+      gs.totalTime  = b.totalTime  || 0;
+      gs.streak     = b.streak     || 0;
+      gs.lastEnq    = b.lastEnq    || '';
+      if (b.name && !getPlayerName()) localStorage.setItem('arcana_player', b.name);
+      if (b.code && !getPlayerCode()) localStorage.setItem('arcana_code', b.code);
+      return true;
+    } catch(e) {}
+  }
+  // 2. Ancienne sauvegarde
+  const local = localStorage.getItem('arcana_save');
+  if (local) {
+    try { const s=JSON.parse(local); gs.completed=s.completed||[]; gs.totalTime=s.totalTime||0; } catch(e){}
+  }
+  gs.streak  = parseInt(localStorage.getItem('arcana_streak')||'0');
+  gs.lastEnq = localStorage.getItem('arcana_lastEnq')||'';
+  return false;
+}
+
+async function loadLeaderboard() {
+  if (CLOUD_ON) {
+    const cloud = await cloudGetScores();
+    if (cloud && cloud.length) {
+      // Fusionner avec local pour ne rien perdre
+      const local = JSON.parse(localStorage.getItem('arcana_scores')||'[]');
+      const merged = [...cloud];
+      local.forEach(le => {
+        if (!merged.find(s => s.code===le.code)) merged.push(le);
+      });
+      merged.sort((a,b) => b.score-a.score);
+      localStorage.setItem('arcana_scores', JSON.stringify(merged.slice(0,100)));
+      return merged.slice(0,100);
+    }
+  }
+  return JSON.parse(localStorage.getItem('arcana_scores')||'[]');
+}
+
+// ── Écran d'accueil ───────────────────────────────────────────
+function askNameIfNeeded(callback) {
+  const existing = getPlayerName();
+  if (existing) { callback(existing); return; }
+
+  const overlay = document.createElement('div');
+  overlay.id = 'nameOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(58,42,20,0.75);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px)';
+  overlay.innerHTML = `
+    <div style="background:var(--creme);padding:36px 40px;border-radius:14px;box-shadow:0 24px 60px rgba(58,42,20,0.5);max-width:400px;width:92%;text-align:center">
+      <div style="font-size:2.5rem;margin-bottom:12px">🎭</div>
+      <div style="font-family:'Cinzel Decorative',serif;font-size:1.3rem;color:var(--brun);margin-bottom:6px">Bienvenue dans ARCANA</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--gris);font-size:0.9rem;line-height:1.6;margin-bottom:24px">
+        Entrez votre pseudo — votre progression est<br>sauvegardée automatiquement sur cet appareil.
+      </div>
+      <input id="nameInput" type="text" maxlength="20" placeholder="Votre pseudo…"
+        style="width:100%;padding:12px 14px;border:1.5px solid var(--creme3);border-radius:6px;font-family:'Cormorant Garamond',serif;font-size:1.05rem;color:var(--brun);outline:none;margin-bottom:14px;box-sizing:border-box" autofocus>
+      <button onclick="confirmName()" style="width:100%;padding:13px;background:var(--or);color:var(--creme);border:none;font-family:'Cinzel Decorative',serif;font-size:0.82rem;letter-spacing:0.15em;cursor:pointer;border-radius:6px;margin-bottom:16px">
+        ▶ Commencer l'aventure
+      </button>
+      <div style="border-top:1px solid var(--creme3);padding-top:14px;margin-top:4px">
+        <div style="font-size:0.7rem;color:var(--gris);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.15em">Reprendre une partie existante</div>
+        <div style="display:flex;gap:8px">
+          <input id="codeInput" type="text" maxlength="8" placeholder="Votre code (ex: AB3X7K)"
+            style="flex:1;padding:10px 12px;border:1.5px solid var(--creme3);border-radius:6px;font-family:'Courier New',monospace;font-size:1rem;color:var(--brun);outline:none;text-transform:uppercase;letter-spacing:0.2em;text-align:center;box-sizing:border-box">
+          <button onclick="confirmResume()" style="padding:10px 16px;background:var(--brun);color:var(--creme);border:none;border-radius:6px;cursor:pointer;font-size:0.8rem;white-space:nowrap">↩ Reprendre</button>
+        </div>
+        <div id="codeErr" style="color:var(--rouge);font-size:0.78rem;margin-top:6px;display:none">Code introuvable. Vérifiez et réessayez.</div>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  window._nameCallback = callback;
+  document.getElementById('nameInput').addEventListener('keydown', e => { if(e.key==='Enter') confirmName(); });
+  document.getElementById('codeInput').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,''); });
+}
+
+function confirmName() {
+  const val = document.getElementById('nameInput')?.value?.trim();
+  if (!val) { const i=document.getElementById('nameInput'); if(i) i.style.borderColor='var(--rouge)'; return; }
+  // Générer un code unique lisible
+  const code = Math.random().toString(36).slice(2,5).toUpperCase() + Math.random().toString(36).slice(2,5).toUpperCase();
+  localStorage.setItem('arcana_player', val.slice(0,20));
+  localStorage.setItem('arcana_code', code);
+  // Montrer le code au joueur avant de continuer
+  const overlay = document.getElementById('nameOverlay');
+  overlay.querySelector('div').innerHTML = `
+    <div style="font-size:2.5rem;margin-bottom:12px">🎉</div>
+    <div style="font-family:'Cinzel Decorative',serif;font-size:1.2rem;color:var(--brun);margin-bottom:8px">Bienvenue, ${val.slice(0,20)} !</div>
+    <div style="font-family:'Cormorant Garamond',serif;color:var(--gris);font-size:0.9rem;margin-bottom:20px">
+      Voici votre code personnel. Notez-le pour reprendre votre progression depuis n'importe quel appareil.
+    </div>
+    <div style="background:var(--brun);color:var(--or);font-family:'Courier New',monospace;font-size:2.2rem;letter-spacing:0.4em;padding:16px 24px;border-radius:8px;margin-bottom:10px">${code}</div>
+    <div style="font-size:0.72rem;color:var(--gris);margin-bottom:24px">📌 Photographiez-le ou notez-le quelque part.</div>
+    <button onclick="startPlay()" style="width:100%;padding:14px;background:var(--or);color:var(--creme);border:none;font-family:'Cinzel Decorative',serif;font-size:0.82rem;letter-spacing:0.15em;cursor:pointer;border-radius:6px">
+      ✓ J'ai noté mon code — Jouer !
+    </button>`;
+}
+
+function updateSyncModeDisplay() {
+  const el = document.getElementById('syncMode');
+  if (!el) return;
+  if (USE_FIREBASE) el.textContent = '☁️ Synchronisation Firebase activée';
+  else if (USE_JSONBIN) el.textContent = '☁️ Synchronisation JSONBin activée';
+  else el.textContent = '💾 Sauvegarde locale — configurez Firebase ou JSONBin pour la synchro multi-appareils';
+}
+
+function startPlay() {
+  document.getElementById('nameOverlay')?.remove();
+  if (window._nameCallback) window._nameCallback(getPlayerName());
+}
+
+async function confirmResume() {
+  const code = document.getElementById('codeInput')?.value?.trim().toUpperCase();
+  const btn = document.querySelectorAll('#nameOverlay button')[1];
+  if (!code || code.length < 4) { document.getElementById('codeErr').style.display='block'; return; }
+  if (btn) { btn.textContent='⏳…'; btn.disabled=true; }
+  document.getElementById('codeErr').style.display='none';
+  // Chercher dans le classement cloud
+  if (CLOUD_ON) {
+    const cloud = await cloudGetScores();
+    if (cloud) {
+      const found = cloud.find(s => s.code === code);
+      if (found) {
+        localStorage.setItem('arcana_player', found.name);
+        localStorage.setItem('arcana_code', code);
+        gs.completed = Array.from({length: found.rooms||0}, (_,i) => i+1);
+        gs.totalTime  = found.time || 0;
+        save();
+        document.getElementById('nameOverlay')?.remove();
+        if (window._nameCallback) window._nameCallback(found.name);
+        return;
+      }
+    }
+  }
+  // Chercher dans classement local
+  const scores = JSON.parse(localStorage.getItem('arcana_scores') || '[]');
+  const found = scores.find(s => s.code === code);
+  if (found) {
+    localStorage.setItem('arcana_player', found.name);
+    localStorage.setItem('arcana_code', code);
+    gs.completed = Array.from({length: found.rooms||0}, (_,i) => i+1);
+    gs.totalTime  = found.time || 0;
+    save();
+    document.getElementById('nameOverlay')?.remove();
+    if (window._nameCallback) window._nameCallback(found.name);
+    return;
+  }
+  document.getElementById('codeErr').style.display='block';
+  if (btn) { btn.textContent='↩ Reprendre'; btn.disabled=false; }
+}
+
+function changeName() {
+  localStorage.removeItem('arcana_player');
+  localStorage.removeItem('arcana_code');
+  askNameIfNeeded(() => { autoSaveScore(); showClassement(); });
+}
+
+
+function completeRoom(){
+  clearInterval(gs.timerInterval);
+  const r=ROOMS[gs.currentRoom];
+  if(!gs.completed.includes(r.id)){
+    gs.completed.push(r.id);
+    gs.totalTime+=gs.timer;
+    save();
+    autoSaveScore(); // ← mise à jour automatique du classement
+  }
+  if(gs.completed.length>=60){setTimeout(showFinalVictory,400);return;}
+  const stars=gs.timer<60?'⭐⭐⭐':gs.timer<120?'⭐⭐':'⭐';
+  document.getElementById('vicStars').textContent=stars;
+  document.getElementById('vicTime').textContent=formatTime(gs.timer);
+  const next=ROOMS[gs.currentRoom+1];
+  document.getElementById('vicSub').textContent=next?`Prochaine : ${next.name}`:'Dernière salle terminée !';
+  document.getElementById('vicBg').style.backgroundImage=`url('${ACT_IMAGES[gs.currentRoom]||`https://picsum.photos/id/100/900/500`}')`;
+  document.getElementById('game-screen').style.display='none';
+  document.getElementById('victory-room').style.display='flex';
+  AUDIO.playVictory();
+}
+function nextRoom(){const n=gs.currentRoom+1;if(n<ROOMS.length){document.getElementById('victory-room').style.display='none';startRoom(n);}else showFinalVictory();}
+
+// ============================================================
+// VICTOIRE FINALE
+// ============================================================
+function showFinalVictory(){
+  hideAll();
+  document.getElementById('fvTime').textContent=formatTime(gs.totalTime);
+  if(document.getElementById('fvRooms')) document.getElementById('fvRooms').textContent=gs.completed.length+'/'+'60';
+  document.getElementById('fvScore').textContent=calcScore(gs.completed.length,gs.totalTime);
+  document.getElementById('final-victory').style.display='flex';
+  autoSaveScore();
+  launchConfetti();
+  AUDIO.playVictory();setTimeout(()=>AUDIO.playVictory(),400);
+}
+function launchConfetti(){
+  const c=document.getElementById('confetti');
+  const colors=['#b8963e','#d4aa5a','#8b2020','#1a3a2a','#3a2a14','#c8b090'];
+  for(let i=0;i<60;i++){
+    const p=document.createElement('div');
+    const col=colors[i%colors.length];const size=4+Math.random()*8;
+    p.style.cssText=`position:absolute;width:${size}px;height:${size}px;background:${col};border-radius:${Math.random()>0.5?'50%':'2px'};left:${Math.random()*100}%;top:-20px;opacity:${0.6+Math.random()*0.4}`;
+    const dur=2+Math.random()*2;const del=Math.random()*1.5;
+    p.style.animation=`confFall ${dur}s ${del}s linear forwards`;
+    c.appendChild(p);
+    setTimeout(()=>p.remove(),(dur+del)*1000+500);
+  }
+}
+const confStyle=document.createElement('style');
+confStyle.textContent='@keyframes confFall{from{transform:translateY(0) rotate(0);opacity:1}to{transform:translateY(100vh) rotate(540deg);opacity:0}}';
+document.head.appendChild(confStyle);
+
+// ============================================================
+// CLASSEMENT — lecture seule, toujours à jour
+// ============================================================
+async function showClassement(){
+  hideAll();
+  const body = document.getElementById('clsBody');
+  const myName = getPlayerName();
+  const myCode = getPlayerCode();
+  // Affichage immédiat cache local
+  let scores = JSON.parse(localStorage.getItem('arcana_scores') || '[]');
+  renderClassement(scores, myName, myCode, body, true);
+  document.getElementById('classement-screen').style.display = 'block';
+  // Rafraîchir depuis chrome.sync
+  const synced = await loadLeaderboard();
+  renderClassement(synced, myName, myCode, body, false);
+}
+
+function renderClassement(scores, myName, myCode, body, isLoading) {
+  const myIdx = scores.findIndex(s => s.name === myName && (s.code === myCode || !s.code));
+  body.innerHTML = `
+    ${myName ? `
+    <div style="background:rgba(184,150,62,0.08);border:1px solid rgba(184,150,62,0.3);border-radius:10px;padding:16px 20px;margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div style="font-size:1.6rem">👤</div>
+        <div style="flex:1;min-width:150px">
+          <div style="font-family:'Cinzel Decorative',serif;font-size:0.95rem;color:var(--or)">${myName}</div>
+          <div style="font-size:0.78rem;color:var(--gris);margin-top:2px">${gs.completed.length} salles · Score : <strong style="color:var(--or)">${calcScore(gs.completed.length,gs.totalTime)}</strong> · ${myIdx>=0?'Rang #'+(myIdx+1):'pas encore classé'}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-family:'Courier New',monospace;font-size:1rem;letter-spacing:0.2em;color:var(--brun);background:var(--creme2);padding:4px 10px;border-radius:4px;border:1px solid var(--creme3)">${myCode||'—'}</div>
+          <div style="font-size:0.65rem;color:var(--gris);margin-top:3px">votre code</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--creme3);font-size:0.75rem;color:var(--gris)">
+        Depuis un autre appareil : ouvrez ARCANA et entrez le code <strong style="font-family:'Courier New',monospace;color:var(--brun)">${myCode||'—'}</strong> pour retrouver votre progression.
+        <button onclick="changeName()" style="margin-left:12px;background:none;border:1px solid var(--creme3);color:var(--gris);padding:3px 10px;border-radius:4px;font-size:0.72rem;cursor:pointer">Changer</button>
+      </div>
+    </div>` : `
+    <div style="background:rgba(232,69,96,0.06);border:1px solid rgba(232,69,96,0.2);border-radius:10px;padding:14px 20px;margin-bottom:20px;font-family:'Cormorant Garamond',serif;color:var(--rouge);font-size:0.95rem">
+      Pas encore de profil. <button onclick="askNameIfNeeded(()=>showClassement())" style="background:var(--rouge);color:white;border:none;padding:5px 14px;border-radius:4px;cursor:pointer;margin-left:8px;font-size:0.82rem">Créer mon profil</button>
+    </div>`}
+
+    ${isLoading ? `<div style="text-align:center;padding:12px;font-size:0.8rem;color:var(--gris)">⏳ Chargement du classement en ligne…</div>` : ''}
+
+    ${scores.length >= 3 ? `
+    <div class="cls-podium">
+      ${scores[1]?`<div class="podium-item podium-2"><div class="podium-bar"><div class="podium-rank">2</div></div><div class="podium-name">${scores[1].name}</div><div class="podium-score">${scores[1].score}</div></div>`:''}
+      ${scores[0]?`<div class="podium-item podium-1"><div class="podium-bar"><div class="podium-rank">1</div></div><div class="podium-name">${scores[0].name}</div><div class="podium-score">${scores[0].score}</div></div>`:''}
+      ${scores[2]?`<div class="podium-item podium-3"><div class="podium-bar"><div class="podium-rank">3</div></div><div class="podium-name">${scores[2].name}</div><div class="podium-score">${scores[2].score}</div></div>`:''}
+    </div>` : ''}
+
+    <div class="cls-table">
+      <div class="cls-row header"><span>#</span><span>Joueur</span><span style="text-align:center">Salles</span><span style="text-align:right">Score</span></div>
+      ${scores.length===0
+        ? `<div class="cls-row"><span></span><span style="color:var(--gris);font-style:italic">Aucun score — soyez le premier !</span><span></span><span></span></div>`
+        : scores.map((sc,i)=>`
+          <div class="cls-row${sc.name===myName?' mine':''}">
+            <span class="cls-rank-n ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${i+1}</span>
+            <span class="cls-player-name">${sc.name}${sc.name===myName?` <span style="font-size:0.6rem;color:var(--or)">◀ vous</span>`:''}</span>
+            <span class="cls-rooms">${sc.rooms}/60</span>
+            <span class="cls-score">${sc.score}</span>
+          </div>`).join('')}
+    </div>
+    <div style="font-size:0.72rem;color:var(--gris);text-align:center;margin-top:14px;font-style:italic">
+      ${isLoading ? 'Synchronisation en cours…' : `Classement à jour · ${scores.length} joueur${scores.length>1?'s':''}`}
+    </div>`;
+}
+// changeName défini dans le bloc cloud ci-dessus
+// ============================================================
+// ENQUÊTES
+// ============================================================
+function showEnquetes(){
+  hideAll();
+  updateStreak();
+  const idx=new Date().getDate()%ENQUETES.length;
+  const enq=ENQUETES[idx];
+  document.getElementById('enqHeroImg').src=UNSPLASH.enquetes[idx];
+  document.getElementById('enqTitle').textContent=enq.titre;
+  document.getElementById('enqTagline').textContent=enq.tagline;
+  renderEnqueteBody(enq,idx);
+  document.getElementById('enquetes-screen').style.display='block';
+  AUDIO.startEnquete();
+}
+function updateStreak(){
+  const today=new Date().toDateString();
+  const yesterday=new Date(Date.now()-86400000).toDateString();
+  if(gs.lastEnq===yesterday){gs.streak++;}
+  else if(gs.lastEnq!==today&&gs.lastEnq!==yesterday&&gs.lastEnq){gs.streak=0;}
+  localStorage.setItem('arcana_streak',gs.streak);STORE.set('progress',{name:getPlayerName(),completed:gs.completed,totalTime:gs.totalTime,streak:gs.streak,lastEnq:gs.lastEnq,score:calcScore(gs.completed.length,gs.totalTime)}).catch(()=>{});updateStats();
+}
+function renderEnqueteBody(enq,idx){
+  const today=new Date().toDateString();
+  const solved=gs.enqSolvedToday===today;
+  document.getElementById('enqBody').innerHTML=`
+    <div class="streak-bar">
+      <div class="streak-num">${gs.streak}</div><div class="streak-fire">🔥</div>
+      <div class="streak-info"><div class="streak-title">Jours consécutifs</div><div class="streak-sub">Revenez chaque jour pour maintenir votre série !</div></div>
+    </div>
+    <div class="section-title">📍 Rapport de police</div>
+    <div class="enq-layout">
+      <div class="rapport-card">
+        <img class="rapport-img" src="${UNSPLASH.enquetes[idx]}" alt="">
+        <div class="rapport-lieu">📍 ${enq.lieu}</div>
+        <div class="rapport-text"><p>${enq.rapport}</p></div>
+      </div>
+      <div class="suspects-col">
+        <div class="section-title" style="margin-bottom:12px">🎭 Suspects</div>
+        ${enq.suspects.map((s,i)=>`
+          <div class="suspect-card ${solved&&i===enq.coupable?'correct-suspect':''}" onclick="selectSusp(this,${i})" data-i="${i}">
+            <img class="suspect-img" src="${UNSPLASH.suspects[i%UNSPLASH.suspects.length]}" alt="">
+            <div class="suspect-info"><div class="suspect-name">${s.nom}</div><div class="suspect-role">${s.role}</div><div class="suspect-detail">${s.detail}</div></div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="section-title">🔍 Indices</div>
+    <div class="indices-grid">
+      ${enq.indices.map((ind,i)=>`
+        <div class="indice-card">
+          <img class="indice-img" src="${UNSPLASH.indices[i%4]}" alt="">
+          <div class="indice-body"><div class="indice-name">${ind.nom}</div><div class="indice-desc">${ind.desc}</div></div>
+        </div>`).join('')}
+    </div>
+    <div class="resolution-card">
+      <div class="section-title" style="margin-bottom:16px">⚖️ Accusez un suspect</div>
+      <div class="acc-btns">${enq.suspects.map((s,i)=>`<button class="btn-accuser" onclick="accuser(${i},'${today}',${idx})">${s.nom}</button>`).join('')}</div>
+      <div class="enq-result" id="enqResult"></div>
+    </div>`;
+}
+function selectSusp(el){document.querySelectorAll('.suspect-card').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');}
+function accuser(idx,today,enqIdx){
+  const enq=ENQUETES[enqIdx];const res=document.getElementById('enqResult');res.style.display='block';
+  if(idx===enq.coupable){
+    res.className='enq-result ok';res.innerHTML=`✓ <strong>Bravo ! Affaire résolue !</strong><br><br>${enq.explication}`;
+    gs.enqSolvedToday=today;gs.lastEnq=today;
+    localStorage.setItem('arcana_enqSolved',today);localStorage.setItem('arcana_lastEnq',today);gs.lastEnq=today;gs.enqSolvedToday=today;
+    document.querySelectorAll('.suspect-card').forEach((c,i)=>{c.classList.remove('selected');if(i===enq.coupable)c.classList.add('correct-suspect');});
+    updateStreak();AUDIO.playVictory();
+  }else{
+    res.className='enq-result ko';res.innerHTML=`✗ <strong>${enq.suspects[idx].nom} est innocent(e).</strong> Mauvaise piste…`;
+    document.querySelectorAll('.suspect-card')[idx].classList.add('wrong-suspect');
+    AUDIO.playError();setTimeout(()=>{res.style.display='none';document.querySelectorAll('.suspect-card')[idx].classList.remove('wrong-suspect');},2500);
+  }
+}
+</script>
+</body>
+</html>

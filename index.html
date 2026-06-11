@@ -13,6 +13,8 @@
 <meta name="language" content="fr">
 <meta name="revisit-after" content="7 days">
 <link rel="canonical" href="https://biloute26.github.io/arcana-escape/">
+<!-- Google AdSense -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2586059139929294" crossorigin="anonymous"></script>
 <meta name="google-site-verification" content="JQiyvpiotAXhFFlONBWM5vr7-0CbHWbFaXrg3lK62Ts">
 
 <!-- ═══ OPEN GRAPH (Facebook, WhatsApp, LinkedIn) ═══ -->
@@ -327,6 +329,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--creme);color:v
   .map-grid{grid-template-columns:1fr 1fr}
   .indices-grid{grid-template-columns:1fr 1fr}
 }
+
+/* ── PUB ADSENSE ── */
+.ad-banner{width:100%;max-width:728px;margin:0 auto 16px;display:block;text-align:center;min-height:90px;overflow:hidden;}
+.ad-banner-small{width:100%;max-width:320px;margin:12px auto;display:block;text-align:center;min-height:50px;}
+.ad-sidebar{width:300px;min-height:250px;margin:0 auto 16px;display:block;text-align:center;}
+.ad-interstitial{position:fixed;bottom:0;left:0;right:0;z-index:999;background:rgba(0,0,0,0.85);padding:12px 16px;display:none;align-items:center;justify-content:center;gap:16px;}
+.ad-interstitial.show{display:flex;}
+.ad-interstitial .ad-close{position:absolute;top:8px;right:12px;color:#fff;cursor:pointer;font-size:1.2rem;opacity:0.7;}
+.ad-interstitial .ad-close:hover{opacity:1;}
+.ad-label{font-size:0.6rem;text-transform:uppercase;letter-spacing:0.15em;color:var(--gris);text-align:center;margin-bottom:4px;}
 </style>
 </head>
 <body>
@@ -2208,6 +2220,7 @@ function changeName() {
   localStorage.removeItem('arcana_player');
   localStorage.removeItem('arcana_code');
   askNameIfNeeded(() => { autoSaveScore(); showClassement(); });
+  maybeShowAd();
 }
 
 
@@ -2339,19 +2352,25 @@ function showEnquetes(){
   updateStreak();
   const idx=new Date().getDate()%ENQUETES.length;
   const enq=ENQUETES[idx];
-  document.getElementById('enqHeroImg').src=UNSPLASH.enquetes[idx];
-  document.getElementById('enqTitle').textContent=enq.titre;
-  document.getElementById('enqTagline').textContent=enq.tagline;
+  if(!enq){console.error('No enquete for idx',idx);return;}
+  const heroImg=document.getElementById('enqHeroImg');
+  if(heroImg) heroImg.src=UNSPLASH.enquetes[idx%UNSPLASH.enquetes.length]||'https://picsum.photos/id/1062/900/320';
+  const titleEl=document.getElementById('enqTitle');
+  if(titleEl) titleEl.textContent=enq.titre;
+  const tagEl=document.getElementById('enqTagline');
+  if(tagEl) tagEl.textContent=enq.tagline;
   renderEnqueteBody(enq,idx);
   document.getElementById('enquetes-screen').style.display='block';
-  AUDIO.startEnquete();
+  try{AUDIO.startEnquete();}catch(e){}
 }
 function updateStreak(){
   const today=new Date().toDateString();
   const yesterday=new Date(Date.now()-86400000).toDateString();
   if(gs.lastEnq===yesterday){gs.streak++;}
   else if(gs.lastEnq!==today&&gs.lastEnq!==yesterday&&gs.lastEnq){gs.streak=0;}
-  localStorage.setItem('arcana_streak',gs.streak);STORE.set('progress',{name:getPlayerName(),completed:gs.completed,totalTime:gs.totalTime,streak:gs.streak,lastEnq:gs.lastEnq,score:calcScore(gs.completed.length,gs.totalTime)}).catch(()=>{});updateStats();
+  localStorage.setItem('arcana_streak',String(gs.streak));
+  save();
+  updateStats();
 }
 function renderEnqueteBody(enq,idx){
   const today=new Date().toDateString();
@@ -2404,6 +2423,30 @@ function accuser(idx,today,enqIdx){
     res.className='enq-result ko';res.innerHTML=`✗ <strong>${enq.suspects[idx].nom} est innocent(e).</strong> Mauvaise piste…`;
     document.querySelectorAll('.suspect-card')[idx].classList.add('wrong-suspect');
     AUDIO.playError();setTimeout(()=>{res.style.display='none';document.querySelectorAll('.suspect-card')[idx].classList.remove('wrong-suspect');},2500);
+  }
+}
+</script>
+
+<!-- Pub sticky bas — s'affiche après chaque salle -->
+<div class="ad-interstitial" id="adBanner">
+  <span class="ad-close" onclick="closeAdBanner()">✕</span>
+  <div style="text-align:center">
+    <div class="ad-label" style="color:#aaa">Publicité</div>
+    <ins class="adsbygoogle"
+         style="display:inline-block;width:320px;height:100px"
+         data-ad-client="ca-pub-2586059139929294"
+         data-ad-slot="auto"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+  </div>
+</div>
+<script>
+function closeAdBanner(){document.getElementById('adBanner').classList.remove('show');}
+// Afficher la pub 3 secondes après la complétion d'une salle (toutes les 3 salles)
+var _adRoomCount=0;
+function maybeShowAd(){
+  _adRoomCount++;
+  if(_adRoomCount%3===0){
+    setTimeout(()=>document.getElementById('adBanner')?.classList.add('show'),2500);
   }
 }
 </script>

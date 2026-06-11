@@ -1,0 +1,11 @@
+/* TEAM */
+Developer: Biloute26
+Contact: widehem.olivier@gmail.com
+Site: https://biloute26.github.io
+
+/* SITE */
+Last update: 2026-06-11
+Language: French
+Doctype: HTML5
+Technology: Vanilla HTML/CSS/JavaScript
+Hosted: GitHub Pages

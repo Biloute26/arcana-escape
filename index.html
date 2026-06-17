@@ -2452,58 +2452,17 @@ function maybeShowAd(){
 }
 </script>
 <!-- BZ-RESEAU-START -->
-<section id="bz-reseau" style="all:initial;display:block;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:linear-gradient(160deg,#0d0a1f,#1a1142);color:#ece8ff;padding:48px 20px;margin-top:40px">
-  <style>
-    #bz-reseau *{box-sizing:border-box}
-    #bz-reseau .bz-wrap{max-width:1080px;margin:0 auto}
-    #bz-reseau .bz-h{text-align:center;font-size:clamp(22px,4vw,32px);font-weight:800;margin:0 0 6px;background:linear-gradient(120deg,#ece8ff,#f4b942,#2fe2c4);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-    #bz-reseau .bz-sub{text-align:center;color:#a59fcc;font-size:15px;margin:0 0 28px}
-    #bz-reseau .bz-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
-    #bz-reseau .bz-card{display:flex;flex-direction:column;text-decoration:none;color:inherit;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:22px;transition:transform .2s,box-shadow .2s,border-color .2s}
-    #bz-reseau .bz-card:hover{transform:translateY(-5px);border-color:#f4b942;box-shadow:0 18px 40px -18px rgba(0,0,0,.7)}
-    #bz-reseau .bz-emoji{font-size:34px;margin-bottom:12px}
-    #bz-reseau .bz-title{font-size:17px;font-weight:700;color:#f4b942;margin-bottom:8px}
-    #bz-reseau .bz-desc{font-size:13.5px;line-height:1.55;color:#a59fcc;flex:1}
-    #bz-reseau .bz-go{margin-top:14px;font-weight:700;font-size:14px;color:#2fe2c4;transition:letter-spacing .2s}
-    #bz-reseau .bz-card:hover .bz-go{letter-spacing:1px}
-  </style>
-  <div class="bz-wrap">
-    <h2 class="bz-h">🌐 Mon univers de sites</h2>
-    <p class="bz-sub">Toutes mes créations gratuites et sans inscription — jeux, outils et découvertes. Choisissez votre prochaine destination.</p>
-    <div class="bz-grid">
-      <a class="bz-card" href="https://biloute26.github.io/cabinet/" target="_blank" rel="noopener">
-        <span class="bz-emoji">🔮</span>
-        <span class="bz-title">Le Cabinet des Merveilles</span>
-        <span class="bz-desc">25 jeux, quiz, énigmes, faits incroyables et secrets cachés. Du divertissement sans fin, gratuit et sans inscription.</span>
-        <span class="bz-go">Découvrir →</span>
-      </a>
-      <a class="bz-card" href="https://biloute26.github.io/Outils-pratiques-du-Quotidien/" target="_blank" rel="noopener">
-        <span class="bz-emoji">🧰</span>
-        <span class="bz-title">Outils Pratiques du Quotidien</span>
-        <span class="bz-desc">Une boîte à outils en ligne : convertisseurs, calculatrices et utilitaires malins pour la vie de tous les jours.</span>
-        <span class="bz-go">Découvrir →</span>
-      </a>
-      <a class="bz-card" href="https://biloute26.github.io/outils-administratifs/" target="_blank" rel="noopener">
-        <span class="bz-emoji">📋</span>
-        <span class="bz-title">Outils Administratifs Français</span>
-        <span class="bz-desc">Simulateurs (aides, impôts, salaire net), générateurs de lettres et formulaires CERFA. Barèmes officiels 2026.</span>
-        <span class="bz-go">Découvrir →</span>
-      </a>
-      <a class="bz-card" href="https://biloute26.github.io/PhotoencyclopIA/" target="_blank" rel="noopener">
-        <span class="bz-emoji">📸</span>
-        <span class="bz-title">PhotoencyclopIA</span>
-        <span class="bz-desc">Une encyclopédie photo intelligente : prenez une photo, l'IA l'analyse et vous renseigne. Installable sur mobile.</span>
-        <span class="bz-go">Découvrir →</span>
-      </a>
-      <a class="bz-card" href="https://biloute26.github.io/atelier-du-dehors/" target="_blank" rel="noopener">
-        <span class="bz-emoji">🏕️</span>
-        <span class="bz-title">L'Atelier du Dehors</span>
-        <span class="bz-desc">Conseils, tests et sélections pour le plein air : randonnée, camping, jardin et nature. Guides et comparatifs.</span>
-        <span class="bz-go">Découvrir →</span>
-      </a>
+<button id="bzOpen" aria-label="Mes autres sites" onclick="document.getElementById('bzModal').style.display='flex'" style="position:fixed;bottom:16px;right:16px;z-index:99998;background:linear-gradient(135deg,#9d6bff,#f4b942);color:#1a1208;border:none;border-radius:99px;padding:11px 18px;font-family:system-ui,sans-serif;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 8px 24px -6px rgba(0,0,0,.6)">🌐 Mes autres sites</button>
+<div id="bzModal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(5,3,15,.82);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif" onclick="if(event.target===this)this.style.display='none'">
+  <div style="max-width:480px;width:100%;max-height:88vh;overflow:auto;background:linear-gradient(160deg,#0d0a1f,#1a1142);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:26px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <h2 style="margin:0;font-size:22px;font-weight:800;background:linear-gradient(120deg,#ece8ff,#f4b942,#2fe2c4);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">🌐 Mon univers de sites</h2>
+      <button onclick="document.getElementById('bzModal').style.display='none'" aria-label="Fermer" style="background:rgba(255,255,255,.08);border:none;color:#ece8ff;width:34px;height:34px;border-radius:50%;font-size:18px;cursor:pointer">×</button>
     </div>
+    <p style="color:#a59fcc;font-size:14px;margin:0 0 18px">Toutes mes créations gratuites — jeux, outils et découvertes.</p>
+    <div style="display:flex;flex-direction:column;gap:10px"><a href="https://biloute26.github.io/cabinet/" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:#ece8ff;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:14px 16px;transition:.2s" onmouseover="this.style.borderColor='#f4b942';this.style.transform='translateX(4px)'" onmouseout="this.style.borderColor='rgba(255,255,255,.12)';this.style.transform='none'"><span style="font-size:26px">🔮</span><span style="font-weight:700;font-size:15px">Le Cabinet des Merveilles</span><span style="margin-left:auto;color:#2fe2c4;font-weight:700">→</span></a><a href="https://biloute26.github.io/Outils-pratiques-du-Quotidien/" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:#ece8ff;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:14px 16px;transition:.2s" onmouseover="this.style.borderColor='#f4b942';this.style.transform='translateX(4px)'" onmouseout="this.style.borderColor='rgba(255,255,255,.12)';this.style.transform='none'"><span style="font-size:26px">🧰</span><span style="font-weight:700;font-size:15px">Outils Pratiques du Quotidien</span><span style="margin-left:auto;color:#2fe2c4;font-weight:700">→</span></a><a href="https://biloute26.github.io/outils-administratifs/" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:#ece8ff;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:14px 16px;transition:.2s" onmouseover="this.style.borderColor='#f4b942';this.style.transform='translateX(4px)'" onmouseout="this.style.borderColor='rgba(255,255,255,.12)';this.style.transform='none'"><span style="font-size:26px">📋</span><span style="font-weight:700;font-size:15px">Outils Administratifs Français</span><span style="margin-left:auto;color:#2fe2c4;font-weight:700">→</span></a><a href="https://biloute26.github.io/PhotoencyclopIA/" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:#ece8ff;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:14px 16px;transition:.2s" onmouseover="this.style.borderColor='#f4b942';this.style.transform='translateX(4px)'" onmouseout="this.style.borderColor='rgba(255,255,255,.12)';this.style.transform='none'"><span style="font-size:26px">📸</span><span style="font-weight:700;font-size:15px">PhotoencyclopIA</span><span style="margin-left:auto;color:#2fe2c4;font-weight:700">→</span></a><a href="https://biloute26.github.io/atelier-du-dehors/" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:#ece8ff;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:14px 16px;transition:.2s" onmouseover="this.style.borderColor='#f4b942';this.style.transform='translateX(4px)'" onmouseout="this.style.borderColor='rgba(255,255,255,.12)';this.style.transform='none'"><span style="font-size:26px">🏕️</span><span style="font-weight:700;font-size:15px">L'Atelier du Dehors</span><span style="margin-left:auto;color:#2fe2c4;font-weight:700">→</span></a></div>
   </div>
-</section>
+</div>
 <!-- BZ-RESEAU-END -->
 </body>
 </html>
